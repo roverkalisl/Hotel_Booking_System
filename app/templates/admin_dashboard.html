@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>🛡️ සුපිරි පරිපාලක උපකරණ පුවරුව</h2>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">පරිශීලකයන්</h5>
+                <h2>{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">හොටෙල්</h5>
+                <h2>{{ total_hotels }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">අනුමත හොටෙල්</h5>
+                <h2>{{ approved_hotels }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">බුකින්ග්</h5>
+                <h2>{{ total_bookings }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>ක්‍රියාමාර්ග</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('admin_hotels') }}" class="btn btn-primary">හොටෙල් පාලනය</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

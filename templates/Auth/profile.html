@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}මගේ පැතිකඩ - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user-circle"></i> මගේ පැතිකඩ</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3 text-center">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h4>{{ user.full_name }}</h4>
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-user-tag"></i> 
+                            {% if user.user_type == 'super_admin' %}
+                                සුපිරි පරිපාලක
+                            {% elif user.user_type == 'hotel_admin' %}
+                                හොටෙල් අයිතිකරු
+                            {% else %}
+                                ගනුදෙනුකරු
+                            {% endif %}
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar"></i> 
+                            ලියාපදිංචි වූ දිනය: {{ user.created_at.strftime('%Y-%m-%d') }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-info-circle"></i> පැතිකඩ තොරතුරු</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="{{ url_for('auth.update_profile') }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">පරිශීලක නාමය</label>
+                                        <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                                        <div class="form-text">පරිශීලක නාමය වෙනස් කළ නොහැක</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="full_name" class="form-label">සම්පූර්ණ නම *</label>
+                                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                                               value="{{ user.full_name }}" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">ඊමේල් *</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ user.email }}" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">දුරකථන අංකය *</label>
+                                        <input type="text" class="form-control" id="phone" name="phone" 
+                                               value="{{ user.phone }}" required placeholder="07XXXXXXXX">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-save"></i> යාවත්කාලීන කරන්න
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-warning text-white">
+                                <h6 class="mb-0"><i class="fas fa-shield-alt"></i> ආරක්ෂණය</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('auth.change_password') }}" class="btn btn-warning">
+                                        <i class="fas fa-key"></i> මුරපදය වෙනස් කරන්න
+                                    </a>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h6>ගිණුම් තත්වය:</h6>
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> 
+                                    <strong>සක්‍රීය</strong>
+                                    <br>
+                                    <small>ඔබගේ ගිණුම සාර්ථකව ක්‍රියාත්මක වේ</small>
+                                </div>
+                                
+                                <h6>ගිණුම් වර්ගය:</h6>
+                                <p>
+                                    {% if user.user_type == 'super_admin' %}
+                                        <span class="badge bg-danger">සුපිරි පරිපාලක</span>
+                                    {% elif user.user_type == 'hotel_admin' %}
+                                        <span class="badge bg-success">හොටෙල් අයිතිකරු</span>
+                                    {% else %}
+                                        <span class="badge bg-info">ගනුදෙනුකරු</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> උපකරණ පුවරුවට
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

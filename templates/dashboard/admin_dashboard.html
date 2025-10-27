@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="alert alert-primary">
+    <h1><i class="fas fa-shield-alt"></i> සුපිරි පරිපාලක උපකරණ පුවරුව</h1>
+    <p class="mb-0">Welcome, {{ current_user.full_name }}!</p>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ total_users }}</h3>
+                <p><i class="fas fa-users"></i> පරිශීලකයන්</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h3>{{ total_hotels }}</h3>
+                <p><i class="fas fa-hotel"></i> හොටෙල්</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ approved_hotels }}</h3>
+                <p><i class="fas fa-check-circle"></i> අනුමත හොටෙල්</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h3>{{ pending_hotels }}</h3>
+                <p><i class="fas fa-clock"></i> අනුමත කිරීමට</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-cogs"></i> ක්‍රියාමාර්ග</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-grid gap-2">
+            <a href="{{ url_for('admin_hotels') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-hotel"></i> හොටෙල් පාලනය
+            </a>
+            <a href="{{ url_for('view_hotels') }}" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-eye"></i> හොටෙල් බලන්න
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-outline-info btn-lg">
+                <i class="fas fa-home"></i> මුල් පිටුව
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

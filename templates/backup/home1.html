@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row align-items-center min-vh-80">
+    <div class="col-md-6">
+        <h1 class="display-4 fw-bold text-primary">
+            <i class="fas fa-hotel"></i><br>
+            ඔබගේ සිහින විඳිමට සුදුසුම ස්ථානය
+        </h1>
+        <p class="lead mt-4">
+            ශ්‍රී ලංකාවේ ඇති ඉතාමත් රිසිකරණය වූ හොටෙල් සොයාගන්න. 
+            අපගේ පද්ධතිය මගින් ඔබට පහසුවෙන් හොටෙල් සොයාගෙන බුකින්ග් කිරීමට හැකිය.
+        </p>
+        
+        {% if not current_user.is_authenticated %}
+        <div class="mt-4">
+            <a class="btn btn-primary btn-lg me-3" href="{{ url_for('register') }}">
+                <i class="fas fa-user-plus"></i> ලියාපදිංචි වන්න
+            </a>
+            <a class="btn btn-outline-primary btn-lg" href="{{ url_for('login') }}">
+                <i class="fas fa-sign-in-alt"></i> පිවිසෙන්න
+            </a>
+        </div>
+        {% else %}
+        <div class="mt-4">
+            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> උපකරණ පුවරුවට යන්න
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6 text-center">
+        <img src="https://cdn.pixabay.com/photo/2016/11/17/09/28/hotel-1831072_1280.jpg" 
+             alt="Hotel" class="img-fluid rounded shadow" style="max-height: 400px;">
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">හොටෙල් සොයන්න</h5>
+                <p class="card-text">ඔබට අවශ්‍ය ස්ථානයට අනුව හොටෙල් සොයාගන්න</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                <h5 class="card-title">බුකින්ග් කරන්න</h5>
+                <p class="card-text">පහසුවෙන් ඔබට අවශ්‍ය කාමරය බුකින්ග් කරන්න</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-concierge-bell fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">සේවා ලබාගන්න</h5>
+                <p class="card-text">විවිධාකාර සේවා සහ සුවපහසුකම් භුක්ති විඳින්න</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

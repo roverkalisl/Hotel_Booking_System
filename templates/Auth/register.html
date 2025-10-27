@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}ලියාපදිංචි වීම - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> ලියාපදිංචි වීම</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">පරිශීලක නාමය *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">ඊමේල් *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">මුරපදය *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">දුරකථන අංකය *</label>
+                            <input type="text" class="form-control" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">සම්පූර්ණ නම *</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="user_type" class="form-label">ගිණුමේ වර්ගය *</label>
+                        <select class="form-select" id="user_type" name="user_type" required>
+                            <option value="">තෝරන්න...</option>
+                            <option value="hotel_admin">හොටෙල් අයිතිකරු</option>
+                            <option value="customer">ගනුදෙනුකරු</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-user-plus"></i> ලියාපදිංචි වන්න
+                    </button>
+                </form>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <p class="mb-0">දැනටමත් ගිණුමක් තිබේද?</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary mt-2">
+                        <i class="fas fa-sign-in-alt"></i> පිවිසෙන්න
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

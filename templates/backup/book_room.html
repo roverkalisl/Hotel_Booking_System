@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}කාමර බුකින්ග් - {{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-calendar-plus"></i> කාමර බුකින්ග්</h4>
+            </div>
+            <div class="card-body">
+                <!-- Room Details -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ hotel.name }}</h5>
+                        <p class="card-text mb-1">
+                            <i class="fas fa-map-marker-alt"></i> {{ hotel.location }} | 
+                            <i class="fas fa-door-open"></i> කාමර {{ room.room_number }} | 
+                            <span class="badge bg-info">{{ room.room_type }}</span>
+                        </p>
+                        <p class="card-text mb-1">
+                            <i class="fas fa-users"></i> {{ room.capacity }} පුද්ගලයන් | 
+                            <i class="fas fa-money-bill-wave text-success"></i> 
+                            රු. <strong class="text-success">{{ "{:,.2f}".format(room.price_per_night) }}</strong> per night
+                        </p>
+                        {% if room.features %}
+                        <p class="card-text small text-muted mb-0">
+                            <i class="fas fa-star"></i> {{ room.features }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Booking Form -->
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="guest_name" class="form-label">
+                                <i class="fas fa-user"></i> සම්පූර්ණ නම <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="guest_name" name="guest_name" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="guest_email" class="form-label">
+                                <i class="fas fa-envelope"></i> ඊමේල් <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="guest_email" name="guest_email" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="guest_phone" class="form-label">
+                                <i class="fas fa-phone"></i> දුරකථන අංකය <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="guest_phone" name="guest_phone" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="check_in" class="form-label">
+                                <i class="fas fa-calendar-day"></i> Check-in <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="check_in" name="check_in" 
+                                   min="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="check_out" class="form-label">
+                                <i class="fas fa-calendar-day"></i> Check-out <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="check_out" name="check_out" required>
+                        </div>
+                    </div>
+
+                    <!-- Price Calculation -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-calculator"></i> මිල ගණනය</h6>
+                            <p class="mb-1">කාමර මිල: රු. <span id="room_price">{{ room.price_per_night }}</span> per night</p>
+                            <p class="mb-1">රාත්‍රි ගණන: <span id="nights_count">0</span></p>
+                            <hr>
+                            <p class="mb-0 fw-bold">මුළු මිල: රු. <span id="total_price">0.00</span></p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-bell"></i> ඇලර්ම් සේවාව</h6>
+                        <p class="mb-0">ඔබ බුකින්ග් කිරීමෙන් පසු හොටෙල් හිමිකරුට ස්වයංක්‍රීයව WhatsApp පණිවිඩයක් යවනු ලැබේ.</p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check-circle"></i> බුකින්ග් තහවුරු කරන්න
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Price calculation
+document.addEventListener('DOMContentLoaded', function() {
+    const roomPrice = {{ room.price_per_night }};
+    const checkIn = document.getElementById('check_in');
+    const checkOut = document.getElementById('check_out');
+    const nightsCount = document.getElementById('nights_count');
+    const totalPrice = document.getElementById('total_price');
+    
+    function calculatePrice() {
+        if (checkIn.value && checkOut.value) {
+            const start = new Date(checkIn.value);
+            const end = new Date(checkOut.value);
+            const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            
+            if (nights > 0) {
+                nightsCount.textContent = nights;
+                totalPrice.textContent = (roomPrice * nights).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } else {
+                nightsCount.textContent = '0';
+                totalPrice.textContent = '0.00';
+            }
+        }
+    }
+    
+    checkIn.addEventListener('change', calculatePrice);
+    checkOut.addEventListener('change', calculatePrice);
+});
+</script>
+{% endblock %}

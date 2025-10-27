@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}හොටෙල් - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-hotel"></i> හොටෙල්</h1>
+    {% if current_user.is_authenticated and current_user.user_type == 'customer' %}
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-tachometer-alt"></i> උපකරණ පුවරුව
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% if hotels %}
+        {% for hotel in hotels %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ hotel.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <i class="fas fa-map-marker-alt text-danger"></i> 
+                        <strong>ස්ථානය:</strong> {{ hotel.location }}
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-money-bill-wave text-success"></i> 
+                        <strong>මිල:</strong> රු. {{ "{:,.2f}".format(hotel.price_per_night) }} per night
+                    </p>
+                    <p class="card-text">
+                        <i class="fas fa-bed text-info"></i> 
+                        <strong>කාමර:</strong> {{ hotel.available_rooms }} / {{ hotel.total_rooms }} තිබේ
+                    </p>
+                    {% if hotel.amenities %}
+                    <p class="card-text">
+                        <i class="fas fa-star text-warning"></i> 
+                        <strong>සුවපහසුකම්:</strong> {{ hotel.amenities }}
+                    </p>
+                    {% endif %}
+                    {% if hotel.description %}
+                    <p class="card-text">
+                        <small class="text-muted">{{ hotel.description[:100] }}{% if hotel.description|length > 100 %}...{% endif %}</small>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-info-circle"></i> විස්තර බලන්න
+                        </a>
+                        {% if current_user.is_authenticated and current_user.user_type == 'customer' %}
+                        <a href="{{ url_for('book_hotel', hotel_id=hotel.id) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-calendar-check"></i> බුක් කරන්න
+                        </a>
+                        {% elif not current_user.is_authenticated %}
+                        <div class="alert alert-warning py-1 mb-0">
+                            <small>බුකින්ග් සඳහා <a href="{{ url_for('login') }}">පිවිසෙන්න</a></small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <i class="fas fa-hotel fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">හොටෙල් නොමැත</h4>
+                <p class="text-muted">දැනට තිබෙන හොටෙල් නොමැත. කරුණාකර පසුව උත්සාහ කරන්න.</p>
+                {% if current_user.is_authenticated and current_user.user_type == 'hotel_admin' %}
+                <a href="{{ url_for('register_hotel') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> හොටෙල් ලියාපදිංචි කරන්න
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> මුල් පිටුවට
+    </a>
+</div>
+{% endblock %}

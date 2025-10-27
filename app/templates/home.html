@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">🏨 සාදරයෙන් පිළිගනිමු!</h1>
+    <p class="lead">Hotel Booking System වෙත පිළිගනිමු</p>
+    <hr class="my-4">
+    <p>ඔබගේ හොටෙල් කළමනාකරණය සහ ගනුදෙනු කිරීම සඳහා සම්පූර්ණ විසඳුම.</p>
+    
+    {% if not current_user.is_authenticated %}
+        <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}" role="button">ලියාපදිංචි වන්න</a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('login') }}" role="button">පිවිසෙන්න</a>
+    {% else %}
+        <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">උපකරණ පුවරුව</a>
+    {% endif %}
+</div>
+{% endblock %}

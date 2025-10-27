@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}හොටෙල් පාලනය - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-hotel text-primary"></i> හොටෙල් පාලනය
+    </h2>
+    <span class="badge bg-primary fs-6">සුපිරි පරිපාලක</span>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> සියලුම හොටෙල්</h5>
+    </div>
+    <div class="card-body">
+        {% if hotels %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>හොටෙල් නම</th>
+                        <th>ස්ථානය</th>
+                        <th>හිමිකරු</th>
+                        <th>කාමර</th>
+                        <th>මිල</th>
+                        <th>තත්වය</th>
+                        <th>ක්‍රියා</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel in hotels %}
+                    <tr>
+                        <td>
+                            <strong>{{ hotel.name }}</strong>
+                            {% if hotel.amenities %}
+                            <br><small class="text-muted">{{ hotel.amenities[:50] }}...</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ hotel.location }}</td>
+                        <td>
+                            {{ hotel.owner_name }}<br>
+                            <small class="text-muted">{{ hotel.contact_number }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ hotel.available_rooms }}/{{ hotel.total_rooms }}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-success">රු. {{ "{:,.2f}".format(hotel.price_per_night) }}</span>
+                        </td>
+                        <td>
+                            {% if hotel.is_approved %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> අනුමතයි
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock"></i> අනුමත කිරීමට
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not hotel.is_approved %}
+                            <a href="{{ url_for('approve_hotel', hotel_id=hotel.id) }}" 
+                               class="btn btn-success btn-sm"
+                               onclick="return confirm('{{ hotel.name }} හොටෙල් අනුමත කිරීමට අවශ්‍යද?')">
+                                <i class="fas fa-check"></i> අනුමත කරන්න
+                            </a>
+                            {% else %}
+                            <span class="text-success">
+                                <i class="fas fa-check-circle"></i> අනුමතයි
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-hotel fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">කිසිදු හොටෙලයක් ලියාපදිංචි වී නොමැත</h5>
+            <p class="text-muted">හොටෙල් අයිතිකරුවන් හොටෙල් ලියාපදිංචි කිරීමෙන් පසු ඒවා මෙහි පෙනෙනු ඇත</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie"></i> හොටෙල් සංඛ්‍යාලේඛන</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        මුළු හොටෙල්
+                        <span class="badge bg-primary rounded-pill">{{ hotels|length }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        අනුමත හොටෙල්
+                        <span class="badge bg-success rounded-pill">
+                            {{ hotels|selectattr('is_approved')|list|length }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        අනුමත කිරීමට ඇති
+                        <span class="badge bg-warning rounded-pill">
+                            {{ hotels|rejectattr('is_approved')|list|length }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> උපදෙස්</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    <strong><i class="fas fa-lightbulb"></i> කාර්යයන්:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>නව හොටෙල් අනුමත කිරීමට "අනුමත කරන්න" බොත්තම භාවිතා කරන්න</li>
+                        <li>අනුමත කළ හොටෙල් only ගනුදෙනුකරුවන්ට පෙනෙනු ඇත</li>
+                        <li>හොටෙල් තොරතුරු නිවැරදි බවට වග බලා ගන්න</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

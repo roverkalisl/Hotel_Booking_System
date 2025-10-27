@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}හොටෙල් ලියාපදිංචි කිරීම - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-hotel"></i> හොටෙල් ලියාපදිංචි කිරීම</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register_hotel') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">හොටෙල් නම *</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="ඔබගේ හොටෙල් නම ඇතුලත් කරන්න">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">ස්ථානය *</label>
+                            <input type="text" class="form-control" id="location" name="location" required 
+                                   placeholder="හොටෙල් ස්ථානය">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">විස්තරය</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="හොටෙල් ගැන කෙටි විස්තරයක්"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_number" class="form-label">දුරකථන අංකය *</label>
+                            <input type="text" class="form-control" id="contact_number" name="contact_number" required 
+                                   placeholder="07X XXX XXXX">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="price_per_night" class="form-label">එක් රාත්‍රියක මිල (රුපියල්) *</label>
+                            <input type="number" class="form-control" id="price_per_night" name="price_per_night" 
+                                   step="0.01" min="0" required placeholder="2500.00">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="total_rooms" class="form-label">මුළු කාමර ගණන *</label>
+                            <input type="number" class="form-control" id="total_rooms" name="total_rooms" 
+                                   min="1" required placeholder="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="amenities" class="form-label">සුවපහසුකම්</label>
+                            <input type="text" class="form-control" id="amenities" name="amenities" 
+                                   placeholder="WiFi, AC, Parking, Pool, Restaurant">
+                            <div class="form-text">කොමාවෙන් වෙන් කරන්න</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> තොරතුරු</h6>
+                        <small class="mb-0">
+                            • හොටෙල් ලියාපදිංචි කිරීමෙන් පසු එය සුපිරි පරිපාලක අනුමත කිරීම අවශ්‍ය වේ.<br>
+                            • අනුමත කිරීමෙන් පසු ගනුදෙනුකරුවන්ට ඔබගේ හොටෙල් පෙන්වනු ඇත.<br>
+                            • WhatsApp දන්වීම් ස්වයංක්‍රීයව ලැබෙනු ඇත.
+                        </small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-save"></i> හොටෙල් ලියාපදිංචි කරන්න
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> ආපසු
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

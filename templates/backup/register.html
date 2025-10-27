@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}ලියාපදිංචි වීම - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> නව ගිණුමක් තනන්න</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user"></i> පරිශීලක නාමය
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   required placeholder="පරිශීලක නාමය">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> ඊමේල් ලිපිනය
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required placeholder="ඊමේල් ලිපිනය">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> මුරපදය
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   required placeholder="මුරපදය">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="fas fa-phone"></i> දුරකථන අංකය
+                            </label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   required placeholder="දුරකථන අංකය">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">
+                            <i class="fas fa-id-card"></i> සම්පූර්ණ නම
+                        </label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                               required placeholder="සම්පූර්ණ නම">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="user_type" class="form-label">
+                            <i class="fas fa-users"></i> ගිණුමේ වර්ගය
+                        </label>
+                        <select class="form-select" id="user_type" name="user_type" required>
+                            <option value="">තෝරන්න...</option>
+                            <option value="hotel_admin">🏨 හොටෙල් අයිතිකරු</option>
+                            <option value="customer">👤 ගනුදෙනුකරු</option>
+                        </select>
+                        <div class="form-text">
+                            හොටෙල් අයිතිකරු: ඔබගේ හොටෙල් කළමනාකරණය කිරීමට<br>
+                            ගනුදෙනුකරු: හොටෙල් සොයා බුකින්ග් කිරීමට
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-user-plus"></i> ගිණුම තනන්න
+                        </button>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="mb-0">දැනටමත් ගිණුමක් තිබේද?</p>
+                    <a href="/login" class="btn btn-outline-success btn-sm mt-2">
+                        <i class="fas fa-sign-in-alt"></i> පිවිසෙන්න
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

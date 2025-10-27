@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}ගනුදෙනුකරු - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-user text-info"></i> ගනුදෙනුකරු උපකරණ පුවරුව
+    </h2>
+    <span class="badge bg-info fs-6">ගනුදෙනුකරු</span>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-hotel"></i> ලබා ගත හැකි හොටෙල්</h5>
+            </div>
+            <div class="card-body">
+                {% if hotels %}
+                <div class="row">
+                    {% for hotel in hotels %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card hotel-card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">{{ hotel.name }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt text-success"></i> 
+                                    <strong>{{ hotel.location }}</strong>
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-money-bill-wave text-success"></i> 
+                                    රු. <strong class="text-success">{{ "{:,.2f}".format(hotel.price_per_night) }}</strong> 
+                                    <small class="text-muted">per night</small>
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-bed text-info"></i> 
+                                    <span class="badge bg-info">{{ hotel.available_rooms }} කාමර තිබේ</span>
+                                </p>
+                                {% if hotel.amenities %}
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-concierge-bell"></i> 
+                                        {{ hotel.amenities[:50] }}{% if hotel.amenities|length > 50 %}...{% endif %}
+                                    </small>
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <button class="btn btn-outline-primary btn-sm w-100" disabled>
+                                    <i class="fas fa-eye"></i> විස්තර බලන්න (coming soon)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-hotel fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">කිසිදු හොටෙලයක් ලබා ගත හැකි නොමැත</h5>
+                    <p class="text-muted">හොටෙල් අනුමත කිරීමෙන් පසු ඒවා මෙහි පෙනෙනු ඇත</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-search"></i> හොටෙල් සොයන්න</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="search_location" class="form-label">ස්ථානය</label>
+                        <input type="text" class="form-control" id="search_location" 
+                               placeholder="නගරය හෝ ප්‍රදේශය">
+                    </div>
+                    <div class="mb-3">
+                        <label for="search_price" class="form-label">උපරිම මිල</label>
+                        <input type="number" class="form-control" id="search_price" 
+                               placeholder="රුපියල් වලින්">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success" disabled>
+                            <i class="fas fa-search"></i> සොයන්න (coming soon)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> තොරතුරු</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    <h6><i class="fas fa-lightbulb"></i> උපදෙස්:</h6>
+                    <ul class="mb-0">
+                        <li>හොටෙල් බැලීමට ඉහත ලැයිස්තුව භාවිතා කරන්න</li>
+                        <li>බුකින්ග් කිරීමට හොටෙල් එකක් තෝරන්න</li>
+                        <li>ඔබගේ බුකින්ග් ඉතිහාසය මෙහි පෙනෙනු ඇත</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Features -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-tools"></i> ඉදිරියේදී එන විශේෂාංග</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-search fa-2x text-primary mb-2"></i>
+                                <h6>සවිස්තරාත්මක සෙවුම</h6>
+                                <small class="text-muted">පLocation, මිල, සේවා අනුව සොයන්න</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                                <h6>බුකින්ග් කිරීම</h6>
+                                <small class="text-muted">කාමර බුකින්ග් කිරීම</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                <h6>Rating System</h6>
+                                <small class="text-muted">හොටෙල් ඇගයීම</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <i class="fas fa-comments fa-2x text-info mb-2"></i>
+                                <h6>ප්‍රතිපෝෂණ</h6>
+                                <small class="text-muted">අත්දැකීම් බෙදාගන්න</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

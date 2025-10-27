@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>ලියාපදිංචි වීම</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">පරිශීලක නාමය</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">ඊමේල්</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">මුරපදය</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">සම්පූර්ණ නම</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">දුරකථන අංකය</label>
+                        <input type="text" class="form-control" id="phone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user_type" class="form-label">ගිණුමේ වර්ගය</label>
+                        <select class="form-control" id="user_type" name="user_type" required>
+                            <option value="hotel_admin">හොටෙල් අයිතිකරු</option>
+                            <option value="customer">ගනුදෙනුකරු</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">ලියාපදිංචි වන්න</button>
+                </form>
+                <hr>
+                <p>දැනටමත් ගිණුමක් තිබේද? <a href="{{ url_for('login') }}">පිවිසෙන්න</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

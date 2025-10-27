@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}මගේ බුකින්ග් - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-history"></i> මගේ බුකින්ග්</h1>
+    <div>
+        <a href="{{ url_for('view_hotels') }}" class="btn btn-primary">
+            <i class="fas fa-hotel"></i> නව බුකින්ග්
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-tachometer-alt"></i> උපකරණ පුවරුව
+        </a>
+    </div>
+</div>
+
+{% if bookings_with_hotels %}
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> බුකින්ග් ලයිස්ටුව</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>බුකින්ග් ID</th>
+                        <th>හොටෙල්</th>
+                        <th>අමුත්තන්</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>මුළු මිල</th>
+                        <th>තත්වය</th>
+                        <th>බුක් කල දිනය</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in bookings_with_hotels %}
+                    {% set booking = item.booking %}
+                    {% set hotel = item.hotel %}
+                    <tr>
+                        <td>
+                            <strong>#{{ booking.id }}</strong>
+                        </td>
+                        <td>
+                            <strong>{{ hotel.name if hotel else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ hotel.location if hotel else 'N/A' }}</small>
+                        </td>
+                        <td>
+                            {{ booking.guest_name }}
+                            <br>
+                            <small class="text-muted">{{ booking.guest_phone }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ booking.check_in_date }}</strong>
+                        </td>
+                        <td>
+                            <strong>{{ booking.check_out_date }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {% set nights = (booking.check_out_date - booking.check_in_date).days %}
+                                {{ nights }} රාත්‍රි
+                            </small>
+                        </td>
+                        <td>
+                            <strong class="text-success">රු. {{ "{:,.2f}".format(booking.total_price) }}</strong>
+                        </td>
+                        <td>
+                            {% if booking.status == 'confirmed' %}
+                            <span class="badge bg-success">තහවුරු කල</span>
+                            {% elif booking.status == 'cancelled' %}
+                            <span class="badge bg-danger">අවලංගු කල</span>
+                            {% elif booking.status == 'completed' %}
+                            <span class="badge bg-info">සම්පූර්ණ</span>
+                            {% else %}
+                            <span class="badge bg-warning">{{ booking.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ booking.booking_date.strftime('%Y-%m-%d') }}
+                            <br>
+                            <small class="text-muted">{{ booking.booking_date.strftime('%H:%M') }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h3>{{ bookings_with_hotels|length }}</h3>
+                <p>මුළු බුකින්ග්</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ bookings_with_hotels|selectattr('booking.status', 'equalto', 'confirmed')|list|length }}</h3>
+                <p>තහවුරු කල</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h3>රු. {{ "{:,.2f}".format(bookings_with_hotels|sum(attribute='booking.total_price')) }}</h3>
+                <p>මුළු වියදම</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">ඔබට තවම බුකින්ග් නොමැත</h4>
+        <p class="text-muted mb-4">පළමු බුකින්ග් එක සඳහා හොටෙල් එකක් සොයන්න!</p>
+        <a href="{{ url_for('view_hotels') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-hotel"></i> හොටෙල් සොයන්න
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

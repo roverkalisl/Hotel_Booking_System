@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hotel.name }} - Hotel Booking System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">{{ hotel.name }}</h3>
+            <span class="badge bg-success">අනුමතයි</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <h5><i class="fas fa-info-circle text-primary"></i> හොටෙල් විස්තර</h5>
+                    <hr>
+                    <p><strong><i class="fas fa-map-marker-alt"></i> ස්ථානය:</strong> {{ hotel.location }}</p>
+                    
+                    {% if hotel.description %}
+                    <p><strong><i class="fas fa-align-left"></i> විස්තරය:</strong></p>
+                    <p class="ps-3">{{ hotel.description }}</p>
+                    {% endif %}
+                    
+                    <p><strong><i class="fas fa-phone"></i> දුරකථන අංකය:</strong> {{ hotel.contact_number }}</p>
+                    <p><strong><i class="fas fa-user-tie"></i> අයිතිකරු:</strong> {{ hotel.owner_name }}</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-success">රු. {{ "{:,.2f}".format(hotel.price_per_night) }}</h4>
+                                    <small>එක් රාත්‍රියක මිල</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h4 class="text-primary">{{ hotel.available_rooms }}/{{ hotel.total_rooms }}</h4>
+                                    <small>තිබෙන කාමර</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if hotel.amenities %}
+                <div class="mb-3">
+                    <h5><i class="fas fa-star text-warning"></i> සුවපහසුකම්</h5>
+                    <hr>
+                    <div class="ps-3">
+                        {% set amenities_list = hotel.amenities.split(',') %}
+                        {% for amenity in amenities_list %}
+                        <span class="badge bg-info me-1 mb-1">{{ amenity.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-calendar-check"></i> කාමරයක් වෙන්කරගන්න</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if current_user.is_authenticated %}
+                            {% if current_user.user_type == 'customer' %}
+                                {% if hotel.available_rooms > 0 %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> කාමර තිබේ
+                                </div>
+                                <a href="{{ url_for('book_hotel', hotel_id=hotel.id) }}" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-calendar-check"></i> බුක් කරන්න
+                                </a>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> කාමර නොමැත
+                                </div>
+                                <button class="btn btn-secondary btn-lg w-100" disabled>
+                                    <i class="fas fa-times-circle"></i> කාමර නොමැත
+                                </button>
+                                {% endif %}
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                බුකින්ග් සඳහා ගනුදෙනුකරු ගිණුමක් අවශ්‍යයි
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            බුකින්ග් සඳහා පිවිසීම අවශ්‍යයි
+                        </div>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-sign-in-alt"></i> පිවිසෙන්න
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-user-plus"></i> ලියාපදිංචි වන්න
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-clock"></i> ඉක්මන් තොරතුරු</h6>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            <p><strong>ලියාපදිංචි කල දිනය:</strong><br>
+                            {{ hotel.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                            
+                            {% if hotel.approved_at %}
+                            <p><strong>අනුමත කල දිනය:</strong><br>
+                            {{ hotel.approved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('view_hotels') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> හොටෙල් ලයිස්ටුවට ආපසු
+    </a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+        <i class="fas fa-home"></i> මුල් පිටුව
+    </a>
+</div>
+{% endblock %}
+<!-- Add this section after the basic hotel info -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h5><i class="fas fa-images"></i> හොටෙල් ඡායාරූප</h5>
+        
+        {% if hotel.images %}
+        <div class="row">
+            {% for image in hotel.images %}
+            <div class="col-md-3 mb-3">
+                <div class="card">
+                    <img src="{{ image.image_url }}" class="card-img-top" alt="Hotel Image" 
+                         style="height: 200px; object-fit: cover;">
+                    <div class="card-body text-center">
+                        {% if image.is_primary %}
+                        <span class="badge bg-primary">ප්‍රධාන රූපය</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 bg-light rounded">
+            <i class="fas fa-image fa-3x text-muted mb-3"></i>
+            <p class="text-muted">ඡායාරූප නොමැත</p>
+        </div>
+        {% endif %}
+        
+        {% if current_user.is_authenticated and 
+              (current_user.user_type == 'super_admin' or 
+               (current_user.user_type == 'hotel_admin' and hotel.owner_email == current_user.email)) %}
+        <div class="mt-3">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
+                <i class="fas fa-upload"></i> ඡායාරූප ඇතුලත් කරන්න
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Image

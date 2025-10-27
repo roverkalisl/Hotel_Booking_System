@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Hotel Admin Dashboard - Hotel Booking System{% endblock %}
+
+{% block content %}
+{% if not hotel %}
+<div class="alert alert-warning">
+    <h1><i class="fas fa-hotel"></i> හොටෙල් අයිතිකරු උපකරණ පුවරුව</h1>
+    <p>Welcome, {{ current_user.full_name }}!</p>
+</div>
+
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-hotel fa-5x text-warning mb-4"></i>
+        <h4 class="text-warning">ඔබගේ හොටෙල් තවම ලියාපදිංචි කර නොමැත</h4>
+        <p class="lead mb-4">
+            ඔබගේ හොටෙල් ලියාපදිංචි කිරීමෙන් පසු එය සුපිරි පරිපාලකයා අනුමත කිරීමෙන් පසු 
+            ගනුදෙනුකරුවන්ට පෙනෙනු ඇත.
+        </p>
+        <a href="{{ url_for('register_hotel') }}" class="btn btn-success btn-lg">
+            <i class="fas fa-plus-circle"></i> හොටෙල් ලියාපදිංචි කරන්න
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <h1><i class="fas fa-hotel"></i> හොටෙල් අයිතිකරු උපකරණ පුවරුව</h1>
+    <p>Welcome, {{ current_user.full_name }}! - {{ hotel.name }}</p>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h3>{{ total_rooms }}</h3>
+                <p><i class="fas fa-bed"></i> මුළු කාමර</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h3>{{ available_rooms }}</h3>
+                <p><i class="fas fa-door-open"></i> තිබෙන කාමර</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ total_bookings }}</h3>
+                <p><i class="fas fa-calendar-check"></i> බුකින්ග්</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h3>{% if hotel.is_approved %}අනුමතයි{% else %}අනුමත කිරීමට{% endif %}</h3>
+                <p><i class="fas fa-status"></i> තත්වය</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-cogs"></i> ක්‍රියාමාර්ග</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-grid gap-2">
+            <a href="#" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-calendar-alt"></i> කැලන්ඩරය
+            </a>
+            <a href="#" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-calendar-check"></i> බුකින්ග්
+            </a>
+            <a href="{{ url_for('register_hotel') }}" class="btn btn-outline-info btn-lg">
+                <i class="fas fa-edit"></i> හොටෙල් යාවත්කාලීන කරන්න
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

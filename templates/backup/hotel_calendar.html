@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}කැලන්ඩරය - {{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-calendar-alt text-primary"></i> බුකින්ග් කැලන්ඩරය
+    </h2>
+    <div>
+        <a href="{{ url_for('hotel_admin_bookings') }}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> බුකින්ග් ලැයිස්තුව
+        </a>
+        <span class="badge bg-primary fs-6">හොටෙල් අයිතිකරු</span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-hotel"></i> {{ hotel.name }} - බුකින්ග් කැලන්ඩරය</h5>
+    </div>
+    <div class="card-body">
+        <!-- Calendar will be implemented with JavaScript -->
+        <div id="calendar" class="mb-4" style="min-height: 600px;"></div>
+        
+        <!-- Legend -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> බුකින්ග් තත්වය</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-success me-2" style="width: 20px; height: 20px; border-radius: 3px;"></div>
+                            <span>තහවුරු කළ බුකින්ග්</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-warning me-2" style="width: 20px; height: 20px; border-radius: 3px;"></div>
+                            <span>පිළිගැනීමට ඇති බුකින්ග්</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-bell"></i> ඇලර්ම් සේවාව</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small mb-2">
+                            <i class="fas fa-check text-success"></i> 
+                            නව බුකින්ග් සඳහා හොටෙල් හිමිකරුට WhatsApp පණිවිඩ යවනු ලැබේ
+                        </p>
+                        <p class="small mb-0">
+                            <i class="fas fa-sync text-info"></i> 
+                            කැලන්ඩරය ස්වයංක්‍රීයව update වේ
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Bookings List -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> වර්තමාන බුකින්ග්</h5>
+    </div>
+    <div class="card-body">
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>බුකින්ග් අංකය</th>
+                        <th>අමුත්තන්</th>
+                        <th>කාමරය</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>තත්වය</th>
+                        <th>ක්‍රියා</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>#{{ booking.id }}</td>
+                        <td>
+                            {{ booking.guest_name }}<br>
+                            <small class="text-muted">{{ booking.guest_phone }}</small>
+                        </td>
+                        <td>කාමර {{ booking.room.room_number }}</td>
+                        <td>{{ booking.check_in_date }}</td>
+                        <td>{{ booking.check_out_date }}</td>
+                        <td>
+                            {% if booking.status == 'confirmed' %}
+                            <span class="badge bg-success">තහවුරු කළ</span>
+                            {% else %}
+                            <span class="badge bg-warning">පිළිගැනීමට</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if booking.status != 'confirmed' %}
+                            <a href="{{ url_for('update_booking_status', booking_id=booking.id, status='confirmed') }}" 
+                               class="btn btn-success btn-sm"
+                               onclick="return confirm('මෙම බුකින්ග් තහවුරු කිරීමට අවශ්‍යද?')">
+                                <i class="fas fa-check"></i> තහවුරු කරන්න
+                            </a>
+                            {% else %}
+                            <span class="text-success"><i class="fas fa-check-circle"></i></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">කිසිදු බුකින්ග් නොමැත</h5>
+            <p class="text-muted">නව බුකින්ග් සඳහා බලාපොරොත්තු වන්න</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- FullCalendar Library -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: {{ calendar_events | tojson }},
+        eventClick: function(info) {
+            alert('බුකින්ග්: ' + info.event.title + '\n' +
+                  'ආරම්භක දින: ' + info.event.startStr + '\n' +
+                  'අවසාන දින: ' + info.event.endStr);
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

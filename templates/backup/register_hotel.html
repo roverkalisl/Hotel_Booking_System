@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}හොටෙල් ලියාපදිංචි කිරීම - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0"><i class="fas fa-plus-circle"></i> නව හොටෙල් ලියාපදිංචි කිරීම</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-signature"></i> හොටෙල් නම <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   required placeholder="හොටෙල් නම">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> ස්ථානය <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   required placeholder="ස්ථානය (නගරය, ප්‍රදේශය)">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-file-alt"></i> හොටෙල් විස්තරය
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="3" placeholder="හොටෙල් ගැන සවිස්තරාත්මක විස්තරය"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="owner_name" class="form-label">
+                                <i class="fas fa-user"></i> හිමිකරුගේ නම <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="owner_name" name="owner_name" 
+                                   required placeholder="හිමිකරුගේ සම්පූර්ණ නම">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="owner_email" class="form-label">
+                                <i class="fas fa-envelope"></i> හිමිකරුගේ ඊමේල් <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="owner_email" name="owner_email" 
+                                   required value="{{ current_user.email }}" readonly
+                                   placeholder="හිමිකරුගේ ඊමේල් ලිපිනය">
+                            <div class="form-text">මෙය ඔබගේ ලියාපදිංචි ඊමේල් ලිපිනයට ස්වයංක්‍රීයව සම්බන්ධ වේ</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_number" class="form-label">
+                                <i class="fas fa-phone"></i> දුරකථන අංකය <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="contact_number" name="contact_number" 
+                                   required placeholder="දුරකථන අංකය">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="price_per_night" class="form-label">
+                                <i class="fas fa-money-bill-wave"></i> මිල <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="price_per_night" name="price_per_night" 
+                                   required min="0" step="0.01" placeholder="0.00">
+                            <div class="form-text">රුපියල් වලින්</div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="total_rooms" class="form-label">
+                                <i class="fas fa-door-closed"></i> කාමර <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="total_rooms" name="total_rooms" 
+                                   required min="1" placeholder="0">
+                            <div class="form-text">මුළු කාමර ගණන</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="amenities" class="form-label">
+                            <i class="fas fa-concierge-bell"></i> සුවපහසුකම් සහ සේවා
+                        </label>
+                        <textarea class="form-control" id="amenities" name="amenities" 
+                                  rows="3" placeholder="උදා: WiFi, පිහිනුම් තටාකය, ආහාර ශාලාව, රිය ඇන හිමිකම..."></textarea>
+                        <div class="form-text">කොමාවකින් වෙන් කරන්න</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> තොරතුරු</h6>
+                        <ul class="mb-0">
+                            <li>හොටෙල් ලියාපදිංචි කිරීමෙන් පසු එය සුපිරි පරිපාලකයා අනුමත කිරීමට බලාපොරොත්තු වන්න</li>
+                            <li>අනුමත කිරීමෙන් පසු ගනුදෙනුකරුවන්ට හොටෙල් පෙනෙනු ඇත</li>
+                            <li>කාමර ස්වයංක්‍රීයව නිර්මාණය වනු ඇත</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-hotel"></i> හොටෙල් ලියාපදිංචි කරන්න
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

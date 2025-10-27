@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hotel.name }} - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-info-circle"></i> {{ hotel.name }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><i class="fas fa-map-marker-alt text-success"></i> <strong>ස්ථානය:</strong> {{ hotel.location }}</p>
+                        <p><i class="fas fa-user text-success"></i> <strong>හිමිකරු:</strong> {{ hotel.owner_name }}</p>
+                        <p><i class="fas fa-phone text-success"></i> <strong>දුරකථන:</strong> {{ hotel.contact_number }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><i class="fas fa-money-bill-wave text-success"></i> <strong>මිල:</strong> රු. <span class="text-success fw-bold">{{ "{:,.2f}".format(hotel.price_per_night) }}</span> per night</p>
+                        <p><i class="fas fa-bed text-success"></i> <strong>තිබෙන කාමර:</strong> <span class="badge bg-success">{{ available_rooms|length }}</span></p>
+                        <p><i class="fas fa-envelope text-success"></i> <strong>ඊමේල්:</strong> {{ hotel.owner_email }}</p>
+                    </div>
+                </div>
+
+                {% if hotel.description %}
+                <div class="mb-4">
+                    <h6 class="text-primary"><i class="fas fa-file-alt"></i> විස්තරය</h6>
+                    <p class="card-text">{{ hotel.description }}</p>
+                </div>
+                {% endif %}
+
+                {% if hotel.amenities %}
+                <div class="mb-4">
+                    <h6 class="text-primary"><i class="fas fa-concierge-bell"></i> සුවපහසුකම්</h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {{ hotel.amenities }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Available Rooms -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-door-open"></i> තිබෙන කාමර</h5>
+            </div>
+            <div class="card-body">
+                {% if available_rooms %}
+                <div class="row">
+                    {% for room in available_rooms %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">කාමර {{ room.room_number }}</h6>
+                                <p class="card-text mb-1">
+                                    <span class="badge bg-info">{{ room.room_type }}</span>
+                                    <span class="badge bg-secondary">{{ room.capacity }} පුද්ගලයන්</span>
+                                </p>
+                                <p class="card-text mb-1">
+                                    <i class="fas fa-money-bill-wave text-success"></i>
+                                    රු. <strong class="text-success">{{ "{:,.2f}".format(room.price_per_night) }}</strong> per night
+                                </p>
+                                {% if room.features %}
+                                <p class="card-text small text-muted">
+                                    <i class="fas fa-star"></i> {{ room.features }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid">
+                                    <a href="{{ url_for('book_room', room_id=room.id) }}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-calendar-plus"></i> බුකින්ග් කරන්න
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-bed fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">දැනට කිසිදු කාමරයක් තිබෙනවා නොමැත</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-concierge-bell"></i> ක්‍රියාමාර්ග</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="tel:{{ hotel.contact_number }}" class="btn btn-outline-primary">
+                        <i class="fas fa-phone"></i> ඇමතීම
+                    </a>
+                    <a href="mailto:{{ hotel.owner_email }}" class="btn btn-outline-success">
+                        <i class="fas fa-envelope"></i> ඊමේල්
+                    </a>
+                    {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('login') }}" class="btn btn-warning">
+                        <i class="fas fa-sign-in-alt"></i> බුකින්ග් සඳහා පිවිසෙන්න
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> තොරතුරු</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    <h6><i class="fas fa-lightbulb"></i> උපදෙස්:</h6>
+                    <ul class="mb-0">
+                        <li>කාමර බුකින්ග් කිරීමට ඉහත බොත්තම භාවිතා කරන්න</li>
+                        <li>බුකින්ග් කිරීමට පමණක් ලොගින් වීම අවශ්‍ය වේ</li>
+                        <li>කෙලින්ම හොටෙල් සම්බන්ධ වීමට දුරකථන/ඊමේල් භාවිතා කරන්න</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

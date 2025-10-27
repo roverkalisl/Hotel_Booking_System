@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}හොටෙල් - Hotel Booking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-hotel text-primary"></i> ලබා ගත හැකි හොටෙල්
+    </h2>
+    {% if not current_user.is_authenticated %}
+    <a href="{{ url_for('login') }}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> පිවිසීම
+    </a>
+    {% endif %}
+</div>
+
+{% if hotels %}
+<div class="row">
+    {% for hotel in hotels %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card hotel-card h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">{{ hotel.name }}</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    <i class="fas fa-map-marker-alt text-success"></i> 
+                    <strong>{{ hotel.location }}</strong>
+                </p>
+                <p class="card-text">
+                    <i class="fas fa-money-bill-wave text-success"></i> 
+                    රු. <strong class="text-success">{{ "{:,.2f}".format(hotel.price_per_night) }}</strong> 
+                    <small class="text-muted">per night</small>
+                </p>
+                <p class="card-text">
+                    <i class="fas fa-bed text-info"></i> 
+                    <span class="badge bg-info">{{ hotel.available_rooms }} කාමර තිබේ</span>
+                </p>
+                {% if hotel.amenities %}
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="fas fa-concierge-bell"></i> 
+                        {{ hotel.amenities[:80] }}{% if hotel.amenities|length > 80 %}...{% endif %}
+                    </small>
+                </p>
+                {% endif %}
+                
+                {% if hotel.description %}
+                <p class="card-text small text-muted">
+                    {{ hotel.description[:100] }}{% if hotel.description|length > 100 %}...{% endif %}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i> විස්තර බලන්න
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-hotel fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">කිසිදු හොටෙලයක් ලබා ගත හැකි නොමැත</h4>
+    <p class="text-muted">හොටෙල් අනුමත කිරීමෙන් පසු ඒවා මෙහි පෙනෙනු ඇත</p>
+</div>
+{% endif %}
+
+<div class="card mt-4">
+    <div class="card-body text-center bg-light">
+        <h5 class="text-primary">🧳 ඔබගේ ගමන සැලසුම් කරන්න</h5>
+        <p class="mb-0">හොටෙල් විස්තර බලා ගැනීමට ලොගින් වීම අවශ්‍ය නොමැත. බුකින්ග් කිරීමට පමණක් ලොගින් වෙන්න!</p>
+    </div>
+</div>
+{% endblock %}
