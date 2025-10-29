@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Hotel Booking System{% endblock %}
-
 {% block content %}
 <div class="hero-section bg-primary text-white py-5 rounded mb-5">
     <div class="container text-center">
@@ -11,83 +9,53 @@
 </div>
 
 <div class="row">
+    {% for hotel in hotels %}
     <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ hotel.name }}</h5>
+                <p class="card-text">
+                    <i class="fas fa-map-marker-alt"></i> {{ hotel.location }}<br>
+                    <i class="fas fa-money-bill-wave"></i> රු. {{ hotel.price_per_night|number_format(2) }} per night<br>
+                    <i class="fas fa-bed"></i> {{ hotel.available_rooms }} කාමර තිබේ
+                </p>
+                <a href="{{ url_for('hotel_details', hotel_id=hotel.id) }}" class="btn btn-primary">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-hotel fa-3x text-primary mb-3"></i>
                 <h5>Super Admin</h5>
-                <p class="text-muted">පද්ධතියේ සමස්ත පාලනය</p>
-                <p><small>Username: <code>superadmin</code></small></p>
-                <p><small>Password: <code>admin123</code></small></p>
+                <p>පද්ධතියේ සමස්ත පාලනය</p>
                 <a href="{{ url_for('login') }}" class="btn btn-primary">පිවිසෙන්න</a>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center">
+    <div class="col-md-4">
+        <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-eye fa-3x text-success mb-3"></i>
                 <h5>හොටෙල් බලන්න</h5>
-                <p class="text-muted">ලියාපදිංචි වීමෙන් තොරව හොටෙල් බලන්න</p>
+                <p>ලියාපදිංචි වීමෙන් තොරව හොටෙල් බලන්න</p>
                 <a href="{{ url_for('view_hotels') }}" class="btn btn-success">හොටෙල් බලන්න</a>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center">
+    <div class="col-md-4">
+        <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-user-plus fa-3x text-info mb-3"></i>
                 <h5>ලියාපදිංචි වන්න</h5>
-                <p class="text-muted">නව ගිණුමක් තනන්න</p>
+                <p>නව ගිණුමක් තනන්න</p>
                 <a href="{{ url_for('register') }}" class="btn btn-info">ලියාපදිංචි වන්න</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-5">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-warning">
-                <h5 class="mb-0"><i class="fas fa-info-circle"></i> පද්ධති තොරතුරු</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-success">
-                    <h6>✅ Hotel Booking System WORKING!</h6>
-                    <p class="mb-0">Flask application is running successfully on port 5000</p>
-                </div>
-                
-                <h6>Features:</h6>
-                <ul>
-                    <li>පරිශීලක ලියාපදිංචි කිරීම සහ පිවිසීම</li>
-                    <li>හොටෙල් ලියාපදිංචි කිරීම</li>
-                    <li>බුකින්ග් ක්‍රමය</li>
-                    <li>WhatsApp දන්වීම්</li>
-                    <li>පරිපාලක පුවරුව</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-rocket"></i> ඉක්මන් ආරම්භය</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
-                        <i class="fas fa-sign-in-alt"></i> පිවිසෙන්න
-                    </a>
-                    <a href="{{ url_for('view_hotels') }}" class="btn btn-outline-success btn-lg">
-                        <i class="fas fa-hotel"></i> හොටෙල් බලන්න
-                    </a>
-                    <a href="{{ url_for('register') }}" class="btn btn-outline-info btn-lg">
-                        <i class="fas fa-user-plus"></i> ලියාපදිංචි වන්න
-                    </a>
-                </div>
             </div>
         </div>
     </div>

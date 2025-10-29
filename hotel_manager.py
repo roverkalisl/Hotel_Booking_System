@@ -1,156 +1,260 @@
 from models import Session, Hotel, Room, Booking
-from datetime import datetime, date, timedelta
-import os
-
-# Simple image handling for console app (PIL නොමැතිව)
-class ConsoleImageManager:
-    @staticmethod
-    def handle_image_upload(hotel, session):
-        """Console application සඳහා ජයාරුප upload කිරීම"""
-        print("\n--- ජයාරුපය එකතු කිරීම ---")
-        print("වර්තමානයේදී ඔබට image path එක enter කිරීමට හැකිය.")
-        print("1. ජයාරුපය නොමැතිව ඉදිරියට යන්න")
-        print("2. පසුව ජයාරුපය එකතු කිරීම")
-        
-        choice = input("ඔබගේ තේරීම (1/2): ")
-        
-        if choice == '1':
-            image_path = input("ජයාරුපයේ path එක ඇතුළත් කරන්න: ")
-            
-            if os.path.exists(image_path):
-                try:
-                    with open(image_path, 'rb') as f:
-                        image_data = f.read()
-                    
-                    hotel.image_data = image_data
-                    hotel.image_filename = os.path.basename(image_path)
-                    hotel.image_content_type = 'image/jpeg'
-                    session.commit()
-                    print("✅ ජයාරුපය සාර්ථකව එකතු කරන ලදී!")
-                except Exception as e:
-                    print(f"❌ ජයාරුපය එකතු කිරීම අසාර්ථක විය: {e}")
-            else:
-                print("❌ ජයාරුපය හමු නොවීය!")
-        else:
-            print("ජයාරුපය එකතු නොකර ඉදිරියට යනවා...")
+from sqlalchemy import and_, or_, func
+from datetime import datetime, date
 
 class HotelManager:
     def __init__(self):
         self.session = Session()
     
-    def add_hotel_with_image_interactive(self):
-        """Interactive hotel addition with image"""
-        print("\n--- නව හොටෙල් එකතු කිරීම (ජයාරුපය සමග) ---")
-        
-        name = input("හොටෙල් නම: ")
-        location = input("ස්ථානය: ")
-        description = input("විස්තරය: ")
-        owner_name = input("හිමිකරුගේ නම: ")
-        owner_email = input("ඊමේල්: ")
-        contact_number = input("දුරකථන අංකය: ")
-        price_per_night = float(input("රාත්‍රියක මිල: "))
-        total_rooms = int(input("කාමර ගණන: "))
-        amenities = input("සුවිශේෂී සේවා (comma separated): ")
-        
-        hotel = Hotel(
-            name=name,
-            location=location,
-            description=description,
-            owner_name=owner_name,
-            owner_email=owner_email,
-            contact_number=contact_number,
-            price_per_night=price_per_night,
-            total_rooms=total_rooms,
-            available_rooms=total_rooms,
-            amenities=amenities
-        )
-        
-        self.session.add(hotel)
-        self.session.commit()
-        
-        # ජයාරුපය එකතු කිරීම
-        ConsoleImageManager.handle_image_upload(hotel, self.session)
-        
-        # Rooms create කිරීම
-        self._create_rooms_for_hotel(hotel.id, total_rooms)
-        
-        print(f"✅ {name} හොටෙල් සාර්ථකව එකතු කරන ලදී!")
-        return hotel
+    def __del__(self):
+        self.session.close()
     
-    def _create_rooms_for_hotel(self, hotel_id, total_rooms):
-        """හො𝑇ෙල් එකට rooms create කිරීම"""
-        room_types = ['Single', 'Double', 'Suite']
-        
-        for i in range(1, total_rooms + 1):
-            room_type = room_types[i % len(room_types)]
-            capacity = 1 if room_type == 'Single' else 2 if room_type == 'Double' else 4
-            
-            room = Room(
-                hotel_id=hotel_id,
-                room_number=f"{i:03d}",
-                room_type=room_type,
-                capacity=capacity,
-                price_per_night=5000 + (i % 3) * 2000,
-                is_available=True,
-                features="WiFi, AC, TV"
+    def create_hotel(self, name, location, description=None):
+        """Create a new hotel"""
+        try:
+            hotel = Hotel(
+                name=name,
+                location=location,
+                description=description
             )
-            self.session.add(room)
-        
-        self.session.commit()
+            self.session.add(hotel)
+            self.session.commit()
+            return hotel.to_dict()
+        except Exception as e:
+            self.session.rollback()
+            raise e
     
     def get_all_hotels(self):
-        """සියලුම හොටෙල් ලබා ගැනීම"""
-        return self.session.query(Hotel).all()
+        """Get all hotels"""
+        try:
+            hotels = self.session.query(Hotel).all()
+            return [hotel.to_dict() for hotel in hotels]
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
     
     def get_hotel_by_id(self, hotel_id):
-        """ID එකෙන් හොටෙල් එකක් ලබා ගැනීම"""
-        return self.session.query(Hotel).filter(Hotel.id == hotel_id).first()
+        """Get hotel by ID"""
+        try:
+            hotel = self.session.query(Hotel).filter(Hotel.id == hotel_id).first()
+            return hotel.to_dict() if hotel else None
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
     
-    def search_hotels(self, location=None, max_price=None):
-        """හොටෙල් search කිරීම"""
-        query = self.session.query(Hotel)
-        
-        if location:
-            query = query.filter(Hotel.location.ilike(f"%{location}%"))
-        if max_price:
-            query = query.filter(Hotel.price_per_night <= max_price)
-        
-        return query.all()
+    def update_hotel(self, hotel_id, **kwargs):
+        """Update hotel details"""
+        try:
+            hotel = self.session.query(Hotel).filter(Hotel.id == hotel_id).first()
+            if not hotel:
+                return None
+            
+            for key, value in kwargs.items():
+                if hasattr(hotel, key):
+                    setattr(hotel, key, value)
+            
+            self.session.commit()
+            return hotel.to_dict()
+        except Exception as e:
+            self.session.rollback()
+            raise e
     
-    def display_hotel_with_image(self, hotel):
-        """ජයාරුපය සමග හොටෙල් display කිරීම"""
-        print(f"\n🏨 {hotel.name}")
-        print(f"📍 {hotel.location}")
-        print(f"💰 රු. {hotel.price_per_night:.2f} per night")
-        print(f"🛏️ {hotel.available_rooms}/{hotel.total_rooms} කාමර available")
-        print(f"📞 {hotel.contact_number}")
-        print(f"✉️ {hotel.owner_email}")
-        
-        if hotel.image_data:
-            print("🖼️ ජයාරුපය: [Available]")
-        else:
-            print("🖼️ ජයාරුපය: [Not Available]")
-        
-        print("-" * 50)
-    
-    def close(self):
-        """Session close කිරීම"""
-        self.session.close()
+    def delete_hotel(self, hotel_id):
+        """Delete a hotel"""
+        try:
+            hotel = self.session.query(Hotel).filter(Hotel.id == hotel_id).first()
+            if not hotel:
+                return False
+            
+            self.session.delete(hotel)
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
 class RoomManager:
     def __init__(self):
         self.session = Session()
     
-    def get_available_rooms(self, hotel_id, check_in_date, check_out_date, guests=1):
-        """Available rooms බලා ගැනීම"""
-        # Simple implementation for now
-        available_rooms = self.session.query(Room).filter(
-            Room.hotel_id == hotel_id,
-            Room.is_available == True,
-            Room.capacity >= guests
-        ).all()
-        
-        return available_rooms
-    
-    def close(self):
+    def __del__(self):
         self.session.close()
+    
+    def create_room(self, hotel_id, room_number, room_type, price_per_night, max_guests=2):
+        """Create a new room"""
+        try:
+            room = Room(
+                hotel_id=hotel_id,
+                room_number=room_number,
+                room_type=room_type,
+                price_per_night=price_per_night,
+                max_guests=max_guests,
+                is_available=1
+            )
+            self.session.add(room)
+            self.session.commit()
+            return room.to_dict()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+    
+    def get_rooms_by_hotel(self, hotel_id):
+        """Get all rooms in a hotel"""
+        try:
+            rooms = self.session.query(Room).filter(Room.hotel_id == hotel_id).all()
+            return [room.to_dict() for room in rooms]
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
+    
+    def get_available_rooms(self, hotel_id=None):
+        """Get available rooms, optionally filtered by hotel"""
+        try:
+            query = self.session.query(Room).filter(Room.is_available == 1)
+            
+            if hotel_id:
+                query = query.filter(Room.hotel_id == hotel_id)
+            
+            rooms = query.all()
+            return [room.to_dict() for room in rooms]
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
+    
+    def update_room(self, room_id, **kwargs):
+        """Update room details"""
+        try:
+            room = self.session.query(Room).filter(Room.id == room_id).first()
+            if not room:
+                return None
+            
+            for key, value in kwargs.items():
+                if hasattr(room, key):
+                    setattr(room, key, value)
+            
+            self.session.commit()
+            return room.to_dict()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+    
+    def delete_room(self, room_id):
+        """Delete a room"""
+        try:
+            room = self.session.query(Room).filter(Room.id == room_id).first()
+            if not room:
+                return False
+            
+            self.session.delete(room)
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+class BookingManager:
+    def __init__(self):
+        self.session = Session()
+    
+    def __del__(self):
+        self.session.close()
+    
+    def create_booking(self, room_id, guest_name, guest_email, guest_phone, 
+                      check_in_date, check_out_date):
+        """Create a new booking"""
+        try:
+            # Check if room is available
+            room = self.session.query(Room).filter(Room.id == room_id).first()
+            if not room or not room.is_available:
+                raise Exception("Room is not available")
+            
+            # Calculate total price
+            nights = (check_out_date - check_in_date).days
+            if nights <= 0:
+                raise Exception("Invalid date range")
+            
+            total_price = nights * room.price_per_night
+            
+            # Create booking
+            booking = Booking(
+                room_id=room_id,
+                guest_name=guest_name,
+                guest_email=guest_email,
+                guest_phone=guest_phone,
+                check_in_date=check_in_date,
+                check_out_date=check_out_date,
+                total_price=total_price,
+                status='confirmed'
+            )
+            
+            # Mark room as occupied
+            room.is_available = 0
+            
+            self.session.add(booking)
+            self.session.commit()
+            return booking.to_dict()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+    
+    def get_all_bookings(self):
+        """Get all bookings"""
+        try:
+            bookings = self.session.query(Booking).all()
+            return [booking.to_dict() for booking in bookings]
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
+    
+    def get_booking_by_id(self, booking_id):
+        """Get booking by ID"""
+        try:
+            booking = self.session.query(Booking).filter(Booking.id == booking_id).first()
+            return booking.to_dict() if booking else None
+        except Exception as e:
+            raise e
+        finally:
+            self.session.close()
+    
+    def cancel_booking(self, booking_id):
+        """Cancel a booking"""
+        try:
+            booking = self.session.query(Booking).filter(Booking.id == booking_id).first()
+            if not booking:
+                return False
+            
+            # Mark room as available again
+            room = self.session.query(Room).filter(Room.id == booking.room_id).first()
+            if room:
+                room.is_available = 1
+            
+            booking.status = 'cancelled'
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e
+    
+    def complete_booking(self, booking_id):
+        """Mark booking as completed and free the room"""
+        try:
+            booking = self.session.query(Booking).filter(Booking.id == booking_id).first()
+            if not booking:
+                return False
+            
+            # Mark room as available
+            room = self.session.query(Room).filter(Room.id == booking.room_id).first()
+            if room:
+                room.is_available = 1
+            
+            booking.status = 'completed'
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise e

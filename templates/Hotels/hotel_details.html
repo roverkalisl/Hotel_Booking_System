@@ -11,56 +11,135 @@
         </div>
     </div>
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="mb-3">
-                    <h5><i class="fas fa-info-circle text-primary"></i> හොටෙල් විස්තර</h5>
-                    <hr>
-                    <p><strong><i class="fas fa-map-marker-alt"></i> ස්ථානය:</strong> {{ hotel.location }}</p>
-                    
-                    {% if hotel.description %}
-                    <p><strong><i class="fas fa-align-left"></i> විස්තරය:</strong></p>
-                    <p class="ps-3">{{ hotel.description }}</p>
-                    {% endif %}
-                    
-                    <p><strong><i class="fas fa-phone"></i> දුරකථන අංකය:</strong> {{ hotel.contact_number }}</p>
-                    <p><strong><i class="fas fa-user-tie"></i> අයිතිකරු:</strong> {{ hotel.owner_name }}</p>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h4 class="text-success">රු. {{ "{:,.2f}".format(hotel.price_per_night) }}</h4>
-                                    <small>එක් රාත්‍රියක මිල</small>
+        <!-- Image Gallery Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5><i class="fas fa-images"></i> හොටෙල් ඡායාරූප</h5>
+                
+                {% if hotel.images %}
+                <div class="row" id="imageGallery">
+                    {% for image in hotel.images %}
+                    <div class="col-md-3 mb-3 image-item" data-image-id="{{ image.id }}">
+                        <div class="card">
+                            <img src="{{ image.image_url }}" class="card-img-top hotel-image" 
+                                 alt="Hotel Image" style="height: 200px; object-fit: cover;"
+                                 data-bs-toggle="modal" data-bs-target="#imageModal"
+                                 onclick="openImageModal('{{ image.image_url }}')">
+                            <div class="card-body text-center">
+                                {% if image.is_primary %}
+                                <span class="badge bg-primary">ප්‍රධාන රූපය</span>
+                                {% endif %}
+                                {% if current_user.is_authenticated and (current_user.user_type == 'super_admin' or (current_user.user_type == 'hotel_admin' and hotel.owner_email == current_user.email)) %}
+                                <div class="mt-2">
+                                    {% if not image.is_primary %}
+                                    <button class="btn btn-sm btn-outline-primary set-primary-btn" 
+                                            data-image-id="{{ image.id }}">
+                                        <i class="fas fa-star"></i> ප්‍රධාන කරන්න
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-danger delete-image-btn" 
+                                            data-image-id="{{ image.id }}">
+                                        <i class="fas fa-trash"></i> මකන්න
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h4 class="text-primary">{{ hotel.available_rooms }}/{{ hotel.total_rooms }}</h4>
-                                    <small>තිබෙන කාමර</small>
-                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-
-                {% if hotel.amenities %}
-                <div class="mb-3">
-                    <h5><i class="fas fa-star text-warning"></i> සුවපහසුකම්</h5>
-                    <hr>
-                    <div class="ps-3">
-                        {% set amenities_list = hotel.amenities.split(',') %}
-                        {% for amenity in amenities_list %}
-                        <span class="badge bg-info me-1 mb-1">{{ amenity.strip() }}</span>
-                        {% endfor %}
+                {% else %}
+                <div class="text-center py-4 bg-light rounded">
+                    <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">ඡායාරූප නොමැත</p>
+                </div>
+                {% endif %}
+                
+                <!-- Image Upload Section for Hotel Owners/Admins -->
+                {% if current_user.is_authenticated and 
+                      (current_user.user_type == 'super_admin' or 
+                       (current_user.user_type == 'hotel_admin' and hotel.owner_email == current_user.email)) %}
+                <div class="mt-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="fas fa-upload"></i> ඡායාරූප ඇතුලත් කිරීම</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="imageUploadForm" enctype="multipart/form-data">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <input type="file" class="form-control" id="hotelImages" 
+                                               name="images" multiple accept="image/*">
+                                        <div class="form-text">
+                                            උපරිම රූප 4ක් ඇතුලත් කළ හැක. රූපයක උපරිම ප්‍රමාණය: 5MB
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="set_primary" id="setPrimary">
+                                            <label class="form-check-label" for="setPrimary">
+                                                ප්‍රධාන රූපයක් ලෙස සකසන්න
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-success" id="uploadBtn">
+                                        <i class="fas fa-upload"></i> රූප ඇතුලත් කරන්න
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="uploadProgress" class="mt-3" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted" id="progressText">ඇතුලත් කරමින්...</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
             </div>
+        </div>
+
+        <!-- Hotel Details Section -->
+        <div class="row">
+            <div class="col-md-8">
+                <h5><i class="fas fa-info-circle text-primary"></i> හොටෙල් විස්තර</h5>
+                <hr>
+                <p><strong><i class="fas fa-map-marker-alt"></i> ස්ථානය:</strong> {{ hotel.location }}</p>
+                
+                {% if hotel.description %}
+                <p><strong><i class="fas fa-align-left"></i> විස්තරය:</strong></p>
+                <p class="ps-3">{{ hotel.description }}</p>
+                {% endif %}
+                
+                <p><strong><i class="fas fa-phone"></i> දුරකථන අංකය:</strong> {{ hotel.contact_number }}</p>
+                <p><strong><i class="fas fa-user-tie"></i> අයිතිකරු:</strong> {{ hotel.owner_name }}</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h4 class="text-success">රු. {{ "{:,.2f}".format(hotel.price_per_night) }}</h4>
+                                <small>එක් රාත්‍රියක මිල</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h4 class="text-primary">{{ hotel.available_rooms }}/{{ hotel.total_rooms }}</h4>
+                                <small>තිබෙන කාමර</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="col-md-4">
+                <!-- Booking Section -->
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0"><i class="fas fa-calendar-check"></i> කාමරයක් වෙන්කරගන්න</h5>
@@ -103,23 +182,21 @@
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <div class="card mt-3">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="mb-0"><i class="fas fa-clock"></i> ඉක්මන් තොරතුරු</h6>
-                    </div>
-                    <div class="card-body">
-                        <small>
-                            <p><strong>ලියාපදිංචි කල දිනය:</strong><br>
-                            {{ hotel.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                            
-                            {% if hotel.approved_at %}
-                            <p><strong>අනුමත කල දිනය:</strong><br>
-                            {{ hotel.approved_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                            {% endif %}
-                        </small>
-                    </div>
-                </div>
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">හොටෙල් ඡායාරූපය</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" style="max-height: 70vh;">
             </div>
         </div>
     </div>
@@ -129,49 +206,129 @@
     <a href="{{ url_for('view_hotels') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> හොටෙල් ලයිස්ටුවට ආපසු
     </a>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
-        <i class="fas fa-home"></i> මුල් පිටුව
-    </a>
 </div>
 {% endblock %}
-<!-- Add this section after the basic hotel info -->
-<div class="row mb-4">
-    <div class="col-12">
-        <h5><i class="fas fa-images"></i> හොටෙල් ඡායාරූප</h5>
-        
-        {% if hotel.images %}
-        <div class="row">
-            {% for image in hotel.images %}
-            <div class="col-md-3 mb-3">
-                <div class="card">
-                    <img src="{{ image.image_url }}" class="card-img-top" alt="Hotel Image" 
-                         style="height: 200px; object-fit: cover;">
-                    <div class="card-body text-center">
-                        {% if image.is_primary %}
-                        <span class="badge bg-primary">ප්‍රධාන රූපය</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="text-center py-4 bg-light rounded">
-            <i class="fas fa-image fa-3x text-muted mb-3"></i>
-            <p class="text-muted">ඡායාරූප නොමැත</p>
-        </div>
-        {% endif %}
-        
-        {% if current_user.is_authenticated and 
-              (current_user.user_type == 'super_admin' or 
-               (current_user.user_type == 'hotel_admin' and hotel.owner_email == current_user.email)) %}
-        <div class="mt-3">
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
-                <i class="fas fa-upload"></i> ඡායාරූප ඇතුලත් කරන්න
-            </button>
-        </div>
-        {% endif %}
-    </div>
-</div>
 
-<!-- Image
+{% block scripts %}
+<script>
+// Image Modal
+function openImageModal(imageUrl) {
+    document.getElementById('modalImage').src = imageUrl;
+}
+
+// Image Upload with AJAX
+document.getElementById('imageUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const files = document.getElementById('hotelImages').files;
+    const setPrimary = document.getElementById('setPrimary').checked;
+    
+    if (files.length === 0) {
+        alert('කරුණාකර රූපයක් තෝරන්න');
+        return;
+    }
+    
+    if (files.length > 4) {
+        alert('උපරිම රූප 4ක් පමණක් ඇතුලත් කළ හැක');
+        return;
+    }
+    
+    // Add all files to FormData
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+    }
+    formData.append('set_primary', setPrimary);
+    
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const progressText = document.getElementById('progressText');
+    
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ඇතුලත් කරමින්...';
+    progressDiv.style.display = 'block';
+    
+    const xhr = new XMLHttpRequest();
+    
+    // Progress tracking
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            progressBar.style.width = percentComplete + '%';
+            progressText.textContent = 'ඇතුලත් කරමින්: ' + Math.round(percentComplete) + '%';
+        }
+    });
+    
+    xhr.addEventListener('load', function() {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                alert('රූප සාර්ථකව ඇතුලත් කරන ලදී!');
+                location.reload();
+            } else {
+                alert('දෝෂය: ' + response.message);
+            }
+        } else {
+            alert('රූප ඇතුලත් කිරීම අසාර්ථකයි');
+        }
+        
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> රූප ඇතුලත් කරන්න';
+        progressDiv.style.display = 'none';
+    });
+    
+    xhr.open('POST', '/hotel/{{ hotel.id }}/upload_images');
+    xhr.send(formData);
+});
+
+// Set Primary Image
+document.querySelectorAll('.set-primary-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const imageId = this.getAttribute('data-image-id');
+        
+        fetch('/hotel/image/' + imageId + '/set_primary', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('ප්‍රධාන රූපය සාර්ථකව සකසන ලදී!');
+                location.reload();
+            } else {
+                alert('දෝෂය: ' + data.message);
+            }
+        });
+    });
+});
+
+// Delete Image
+document.querySelectorAll('.delete-image-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const imageId = this.getAttribute('data-image-id');
+        
+        if (confirm('ඔබට මෙම රූපය මකා දැමීමට අවශ්‍යද?')) {
+            fetch('/hotel/image/' + imageId + '/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('රූපය සාර්ථකව මකා දමන ලදී!');
+                    // Remove image element from DOM
+                    document.querySelector(`.image-item[data-image-id="${imageId}"]`).remove();
+                } else {
+                    alert('දෝෂය: ' + data.message);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

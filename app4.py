@@ -1,21 +1,15 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session, get_flashed_messages
+from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
-import re
-import requests
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Flask app creation
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-12345-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///hotel_booking.db'
+app.config['SECRET_KEY'] = 'your-secret-key-12345-change-in-production'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hotel_booking.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # File upload configuration
@@ -36,27 +30,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def validate_password_strength(password):
-    """Validate password strength"""
-    if len(password) < 8:
-        return False, "මුරපදය අවම වශයෙන් අකුරු 8ක් විය යුතුය"
-    if not re.search(r"[A-Z]", password):
-        return False, "මුරපදයේ අවම වශයෙන් එක් ඉංග්‍රීසි ලොකු අකුරක්වත් තිබිය යුතුය"
-    if not re.search(r"[a-z]", password):
-        return False, "මුරපදයේ අවම වශයෙන් එක් ඉංග්‍රීසි පොඩි අකුරක්වත් තිබිය යුතුය"
-    if not re.search(r"\d", password):
-        return False, "මුරපදයේ අවම වශයෙන් එක් ඉලක්කමක්වත් තිබිය යුතුය"
-    return True, "මුරපදය ශක්තිමත් ය"
-
-def validate_booking_dates(check_in, check_out):
-    """Validate booking dates"""
-    if check_in >= check_out:
-        return False, "Check-out දිනය check-in දිනයට පසුව විය යුතුය"
-    if check_in < datetime.now().date():
-        return False, "Check-in දිනය අතීතයේ විය නොහැක"
-    return True, "දිනයන් වලංගු ය"
-
-# Models
+# Models - UPDATED with image fields
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -87,7 +61,7 @@ class Hotel(db.Model):
     available_rooms = db.Column(db.Integer, nullable=False)
     amenities = db.Column(db.Text)
     hotel_type = db.Column(db.String(20), default='hotel')  # hotel, villa, resort
-    image_path = db.Column(db.String(255))
+    image_path = db.Column(db.String(255))  # New field for hotel image
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_approved = db.Column(db.Boolean, default=False)
     approved_by = db.Column(db.Integer, nullable=True)
@@ -102,7 +76,7 @@ class Room(db.Model):
     price_per_night = db.Column(db.Float, nullable=False)
     is_available = db.Column(db.Boolean, default=True)
     features = db.Column(db.Text)
-    image_path = db.Column(db.String(255))
+    image_path = db.Column(db.String(255))  # New field for room image
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Booking(db.Model):
@@ -138,196 +112,149 @@ Check-out: {check_out}
     """
     print(f"📱 WhatsApp Notification to {hotel_phone}:")
     print(message)
-    
-    # Try to send actual WhatsApp message if API key exists
-    whatsapp_api_key = os.environ.get('WHATSAPP_API_KEY')
-    if whatsapp_api_key:
-        return send_whatsapp_api_message(hotel_phone, message)
-    
     return True
 
-def send_whatsapp_api_message(phone, message):
-    """Send actual WhatsApp message using API"""
-    try:
-        # Example using a WhatsApp API service (adjust based on your provider)
-        api_url = "https://api.whatsapp.com/send"
-        payload = {
-            'phone': phone,
-            'message': message,
-            'api_key': os.environ.get('WHATSAPP_API_KEY')
-        }
-        # response = requests.post(api_url, json=payload)
-        # return response.status_code == 200
-        print(f"📧 WhatsApp API would send to {phone}: {message[:50]}...")
-        return True
-    except Exception as e:
-        print(f"WhatsApp API Error: {e}")
-        return False
-
-# Database initialization
+# Database initialization - FIXED: No more dropping tables every time
 def init_db():
     with app.app_context():
-        # Drop all tables and recreate with new schema
-        db.drop_all()
         db.create_all()
         
-        print("✅ Database tables created with new schema!")
-        
-        # Create super admin
-        super_admin = User(
-            username='superadmin',
-            email='super@admin.com',
-            user_type='super_admin',
-            full_name='System Super Administrator',
-            phone='0112345678',
-            is_active=True
-        )
-        super_admin.set_password('admin123')
-        db.session.add(super_admin)
-        
-        # Create sample customer user
-        customer_user = User(
-            username='customer',
-            email='customer@example.com',
-            user_type='customer',
-            full_name='Sample Customer',
-            phone='0771234567',
-            is_active=True
-        )
-        customer_user.set_password('customer123')
-        db.session.add(customer_user)
-        
-        # Create sample hotel admin
-        hotel_admin = User(
-            username='hotelowner',
-            email='owner@example.com',
-            user_type='hotel_admin',
-            full_name='Hotel Owner',
-            phone='0777654321',
-            is_active=True
-        )
-        hotel_admin.set_password('owner123')
-        db.session.add(hotel_admin)
-        
-        # Create your user account
-        your_account = User(
-            username='kris',
-            email='kris@gmail.com',
-            user_type='hotel_admin',
-            full_name='Kris Perera',
-            phone='0771234567',
-            is_active=True
-        )
-        your_account.set_password('kris123')
-        db.session.add(your_account)
-        
-        # Create sample hotels with hotel_type
-        hotels = [
-            Hotel(
-                name='සීගිරිය පැලස්',
-                location='සීගිරිය',
-                description='සීගිරිය බලකොටුව අසල පිහිටා ඇති විලාසිතා සම්පන්න හොටෙලය',
-                owner_name='සුනිල් පෙරේරා',
-                owner_email='sunil@sigiriyapalace.com',
-                contact_number='0771234567',
-                price_per_night=25000.00,
-                total_rooms=50,
-                available_rooms=35,
-                amenities='පිහිනුම් තටාකය, විනෝදාස්වාද, නවීන කාමර',
-                hotel_type='hotel',
-                is_approved=True
-            ),
-            Hotel(
-                name='ගාලු විලා',
-                location='ගාල්ල',
-                description='ගාලු කොටුව අසල පිහිටා ඇති පෞද්ගලික විලාව',
-                owner_name='ප්‍රියන්ත සිල්වා',
-                owner_email='priyantha@gallevilla.com',
-                contact_number='0775558888',
-                price_per_night=45000.00,
-                total_rooms=1,
-                available_rooms=1,
-                amenities='පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා',
-                hotel_type='villa',
-                is_approved=True
-            ),
-            Hotel(
-                name='කොළඹ රැජින',
-                location='කොළඹ',
-                description='කොළඹ මධ්‍යස්ථානයේ පිහිටා ඇති නවීන හොටෙලය',
-                owner_name='මහේෂ් ගුණරත්න',
-                owner_email='mahesh@colombiqueen.com',
-                contact_number='0777654321',
-                price_per_night=18000.00,
-                total_rooms=30,
-                available_rooms=25,
-                amenities='WiFi, A/C, අවන්හල, රියැදුරන් සේවාව',
-                hotel_type='hotel',
-                is_approved=True
-            ),
-            Hotel(
-                name='ක්‍රිස් හොටෙල්',
-                location='කොළඹ',
-                description='නවීන සුවපහසු සහිත හොටෙලය',
-                owner_name='ක්‍රිස් පෙරේරා',
-                owner_email='kris@gmail.com',
-                contact_number='0771234567',
-                price_per_night=20000.00,
-                total_rooms=20,
-                available_rooms=15,
-                amenities='WiFi, A/C, අවන්හල, පාකිං',
-                hotel_type='hotel',
-                is_approved=True
+        # Create super admin if not exists
+        super_admin = User.query.filter_by(user_type='super_admin').first()
+        if not super_admin:
+            super_admin = User(
+                username='superadmin',
+                email='super@admin.com',
+                user_type='super_admin',
+                full_name='System Super Administrator',
+                phone='0112345678',
+                is_active=True
             )
-        ]
-        
-        for hotel in hotels:
-            db.session.add(hotel)
-        
-        db.session.commit()
-        print("✅ Sample hotels created successfully!")
-        
-        # Create rooms for hotels
-        hotels_in_db = Hotel.query.all()
-        for hotel in hotels_in_db:
-            if hotel.hotel_type == 'villa':
-                # For villa, create one main villa unit
-                villa_room = Room(
-                    hotel_id=hotel.id,
-                    room_number='VILLA-001',
-                    room_type='පෞද්ගලික විලා',
-                    capacity=8,
-                    price_per_night=hotel.price_per_night,
-                    is_available=True,
-                    features='4 කාමර, 3 සනීපාරක්ෂක, පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා'
-                )
-                db.session.add(villa_room)
-            else:
-                # For regular hotels, create multiple rooms
-                room_types = [
-                    {'number': '101', 'type': 'Standard', 'capacity': 2, 'price': hotel.price_per_night * 0.8, 'features': 'AC, TV, WiFi'},
-                    {'number': '102', 'type': 'Deluxe', 'capacity': 3, 'price': hotel.price_per_night, 'features': 'AC, TV, WiFi, Mini Bar'},
-                    {'number': '201', 'type': 'Suite', 'capacity': 4, 'price': hotel.price_per_night * 1.5, 'features': 'AC, TV, WiFi, Mini Bar, Balcony'}
+            super_admin.set_password('admin123')
+            db.session.add(super_admin)
+            
+            # Create sample customer user
+            customer_user = User(
+                username='customer',
+                email='customer@example.com',
+                user_type='customer',
+                full_name='Sample Customer',
+                phone='0771234567',
+                is_active=True
+            )
+            customer_user.set_password('customer123')
+            db.session.add(customer_user)
+            
+            # Create sample hotel admin
+            hotel_admin = User(
+                username='hotelowner',
+                email='owner@example.com',
+                user_type='hotel_admin',
+                full_name='Hotel Owner',
+                phone='0777654321',
+                is_active=True
+            )
+            hotel_admin.set_password('owner123')
+            db.session.add(hotel_admin)
+            
+            # Check if sample hotels already exist
+            existing_hotels = Hotel.query.count()
+            if existing_hotels == 0:
+                # Create sample hotels only if none exist
+                hotels = [
+                    Hotel(
+                        name='සීගිරිය පැලස්',
+                        location='සීගිරිය',
+                        description='සීගිරිය බලකොටුව අසල පිහිටා ඇති විලාසිතා සම්පන්න හොටෙලය',
+                        owner_name='සුනිල් පෙරේරා',
+                        owner_email='sunil@sigiriyapalace.com',
+                        contact_number='0771234567',
+                        price_per_night=25000.00,
+                        total_rooms=50,
+                        available_rooms=35,
+                        amenities='පිහිනුම් තටාකය, විනෝදාස්වාද, නවීන කාමර',
+                        hotel_type='hotel',
+                        is_approved=True
+                    ),
+                    Hotel(
+                        name='ගාලු විලා',
+                        location='ගාල්ල',
+                        description='ගාලු කොටුව අසල පිහිටා ඇති පෞද්ගලික විලාව',
+                        owner_name='ප්‍රියන්ත සිල්වා',
+                        owner_email='priyantha@gallevilla.com',
+                        contact_number='0775558888',
+                        price_per_night=45000.00,
+                        total_rooms=1,  # Villa has only one unit
+                        available_rooms=1,
+                        amenities='පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා',
+                        hotel_type='villa',  # Mark as villa
+                        is_approved=True
+                    ),
+                    Hotel(
+                        name='කොළඹ රැජින',
+                        location='කොළඹ',
+                        description='කොළඹ මධ්‍යස්ථානයේ පිහිටා ඇති නවීන හොටෙලය',
+                        owner_name='මහේෂ් ගුණරත්න',
+                        owner_email='mahesh@colombiqueen.com',
+                        contact_number='0777654321',
+                        price_per_night=18000.00,
+                        total_rooms=30,
+                        available_rooms=25,
+                        amenities='WiFi, A/C, අවන්හල, රියැදුරන් සේවාව',
+                        hotel_type='hotel',
+                        is_approved=True
+                    )
                 ]
                 
-                for room_data in room_types:
-                    room = Room(
-                        hotel_id=hotel.id,
-                        room_number=room_data['number'],
-                        room_type=room_data['type'],
-                        capacity=room_data['capacity'],
-                        price_per_night=room_data['price'],
-                        is_available=True,
-                        features=room_data['features']
-                    )
-                    db.session.add(room)
-        
-        db.session.commit()
-        print("✅ Rooms created successfully!")
-        print("✅ Database initialized successfully!")
+                for hotel in hotels:
+                    db.session.add(hotel)
+                
+                db.session.commit()
+                
+                # Create rooms for hotels
+                hotels_in_db = Hotel.query.all()
+                for hotel in hotels_in_db:
+                    if hotel.hotel_type == 'villa':
+                        # For villa, create one main villa unit
+                        villa_room = Room(
+                            hotel_id=hotel.id,
+                            room_number='VILLA-001',
+                            room_type='පෞද්ගලික විලා',
+                            capacity=8,
+                            price_per_night=hotel.price_per_night,
+                            is_available=True,
+                            features='4 කාමර, 3 සනීපාරක්ෂක, පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා'
+                        )
+                        db.session.add(villa_room)
+                    else:
+                        # For regular hotels, create multiple rooms
+                        room_types = [
+                            {'number': '101', 'type': 'Standard', 'capacity': 2, 'price': hotel.price_per_night * 0.8, 'features': 'AC, TV, WiFi'},
+                            {'number': '102', 'type': 'Deluxe', 'capacity': 3, 'price': hotel.price_per_night, 'features': 'AC, TV, WiFi, Mini Bar'},
+                            {'number': '201', 'type': 'Suite', 'capacity': 4, 'price': hotel.price_per_night * 1.5, 'features': 'AC, TV, WiFi, Mini Bar, Balcony'}
+                        ]
+                        
+                        for room_data in room_types:
+                            room = Room(
+                                hotel_id=hotel.id,
+                                room_number=room_data['number'],
+                                room_type=room_data['type'],
+                                capacity=room_data['capacity'],
+                                price_per_night=room_data['price'],
+                                is_available=True,
+                                features=room_data['features']
+                            )
+                            db.session.add(room)
+                
+                db.session.commit()
+                print("✅ Sample data created successfully!")
+            else:
+                print("✅ Database already has data - skipping sample data creation")
+            
+            print("✅ Database initialized successfully!")
 
-# Base Template with common styling
-def base_template(title, content):
+# Base Template with common styling - FIXED SYNTAX
+def base_template(title, content, user_type=None):
     nav_links = """
     <a class="nav-link text-white" href="/hotels"><i class="fas fa-hotel"></i> හොටෙල්</a>
     <a class="nav-link text-white" href="/login"><i class="fas fa-sign-in-alt"></i> පිවිසීම</a>
@@ -343,18 +270,9 @@ def base_template(title, content):
         <a class="nav-link text-white" href="/logout"><i class="fas fa-sign-out-alt"></i> පිටවීම</a>
         """
     
-    # Get flash messages
+    # Flash messages handling - FIXED: Simple approach
     flash_messages = ""
-    with app.test_request_context():
-        messages = get_flashed_messages(with_categories=True)
-        if messages:
-            for category, message in messages:
-                flash_messages += f"""
-                <div class="alert alert-{category} alert-dismissible fade show" role="alert">
-                    {message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                """
+    # This will be handled by Flask's flash system automatically
     
     return f"""
     <!DOCTYPE html>
@@ -376,7 +294,6 @@ def base_template(title, content):
             .room-image {{ height: 150px; object-fit: cover; }}
             .villa-badge {{ background-color: #ff6b35; }}
             .hotel-badge {{ background-color: #17a2b8; }}
-            .flash-messages {{ position: fixed; top: 80px; right: 20px; z-index: 1000; width: 400px; }}
         </style>
     </head>
     <body>
@@ -391,11 +308,6 @@ def base_template(title, content):
             </div>
         </nav>
         
-        <!-- Flash Messages -->
-        <div class="flash-messages">
-            {flash_messages}
-        </div>
-        
         <div class="container mt-4">
             {content}
         </div>
@@ -405,39 +317,15 @@ def base_template(title, content):
     </html>
     """
 
-# Error Handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    content = """
-    <div class="text-center py-5">
-        <h1 class="display-1 text-muted">404</h1>
-        <h2>පිටුව හමු නොවීය</h2>
-        <p class="lead">ඔබ සොයන පිටුව නොමැත.</p>
-        <a href="/" class="btn btn-primary">මුල් පිටුවට</a>
-    </div>
-    """
-    return base_template("404 - Page Not Found", content), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    content = """
-    <div class="text-center py-5">
-        <h1 class="display-1 text-muted">500</h1>
-        <h2>සේවාදායක දෝෂය</h2>
-        <p class="lead">සේවාදායකයේ දෝෂයක් ඇත. කරුණාකර පසුව නැවත උත්සාහ කරන්න.</p>
-        <a href="/" class="btn btn-primary">මුල් පිටුවට</a>
-    </div>
-    """
-    return base_template("500 - Server Error", content), 500
-
 # Routes
 @app.route('/')
 def home():
     """මුල් පිටුව"""
+    # Get some statistics for home page
     total_hotels = Hotel.query.filter_by(is_approved=True).count()
     total_bookings = Booking.query.count()
     
+    # Get featured hotels
     featured_hotels = Hotel.query.filter_by(is_approved=True).limit(3).all()
     
     featured_html = ""
@@ -475,7 +363,6 @@ def home():
         <hr class="my-4">
         <p>අපගේ පද්ධතිය මගින් {total_hotels} හොටෙල් සහ {total_bookings} බුකින්ග් සම්පූර්ණ වී ඇත.</p>
         <a class="btn btn-primary btn-lg" href="/hotels" role="button">හොටෙල් සොයන්න</a>
-        <a class="btn btn-outline-primary btn-lg" href="/search_hotels" role="button">සෙවුම</a>
     </div>
     
     <h3>විශේෂාංගගත හොටෙල්</h3>
@@ -529,8 +416,7 @@ def login():
         if user and user.check_password(password) and user.is_active:
             login_user(user)
             flash('සාර්ථකව පිවිසිය!', 'success')
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard'))
         else:
             flash('පිවිසීම අසාර්ථකයි. කරුණාකර පරිශීලක නාමය සහ මුරපදය පරීක්ෂා කරන්න.', 'danger')
             return redirect(url_for('login'))
@@ -577,13 +463,6 @@ def login():
                             <p class="mb-0">Password: <code>customer123</code></p>
                         </div>
                     </div>
-                    <div class="row mt-2">
-                        <div class="col-md-12">
-                            <p class="mb-1"><strong>Your Account:</strong></p>
-                            <p class="mb-1">Username: <code>kris</code></p>
-                            <p class="mb-0">Password: <code>kris123</code></p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -605,12 +484,7 @@ def register():
         phone = request.form['phone']
         user_type = request.form['user_type']
         
-        # Validate password strength
-        is_valid, message = validate_password_strength(password)
-        if not is_valid:
-            flash(message, 'danger')
-            return redirect(url_for('register'))
-        
+        # Check if user exists
         if User.query.filter_by(username=username).first():
             flash('මෙම පරිශීලක නාමය දැනටමත් භාවිතා කර ඇත.', 'danger')
             return redirect(url_for('register'))
@@ -657,7 +531,6 @@ def register():
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">මුරපදය</label>
                                 <input type="password" class="form-control" name="password" required>
-                                <div class="form-text">මුරපදය අවම වශයෙන් අකුරු 8ක් විය යුතුය</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">දුරකථන අංකය</label>
@@ -719,10 +592,7 @@ def admin_dashboard():
     pending_hotels = Hotel.query.filter_by(is_approved=False).count()
     total_bookings = Booking.query.count()
     
-    # Calculate total revenue
-    all_bookings = Booking.query.all()
-    total_revenue = sum([b.total_price for b in all_bookings]) if all_bookings else 0
-    
+    # Recent bookings
     recent_bookings = Booking.query.order_by(Booking.booking_date.desc()).limit(5).all()
     
     bookings_html = ""
@@ -788,7 +658,7 @@ def admin_dashboard():
         <div class="col-md-2 mb-4">
             <div class="card text-white bg-dark">
                 <div class="card-body text-center">
-                    <h3>රු. {total_revenue:,.0f}</h3>
+                    <h3>රු. {sum([b.total_price for b in Booking.query.all()] or 0):,.0f}</h3>
                     <p>මුළු ආදායම</p>
                 </div>
             </div>
@@ -883,11 +753,13 @@ def hotel_admin_dashboard():
         """
         return base_template("Hotel Admin Dashboard", content)
     
+    # Hotel exists - show statistics
     total_rooms = Room.query.filter_by(hotel_id=hotel.id).count()
     available_rooms = Room.query.filter_by(hotel_id=hotel.id, is_available=True).count()
     total_bookings = Booking.query.filter_by(hotel_id=hotel.id).count()
     today_bookings = Booking.query.filter_by(hotel_id=hotel.id, check_in_date=datetime.now().date()).count()
     
+    # Recent bookings for this hotel
     recent_bookings = Booking.query.filter_by(hotel_id=hotel.id).order_by(Booking.booking_date.desc()).limit(5).all()
     
     bookings_html = ""
@@ -1046,10 +918,7 @@ def customer_dashboard():
                         <a href="/my_bookings" class="btn btn-outline-success btn-lg">
                             <i class="fas fa-history"></i> මගේ බුකින්ග්
                         </a>
-                        <a href="/search_hotels" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-search"></i> සෙවුම
-                        </a>
-                        <a href="/" class="btn btn-outline-secondary btn-lg">
+                        <a href="/" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-home"></i> මුල් පිටුව
                         </a>
                     </div>
@@ -1097,6 +966,7 @@ def view_hotels():
         badge_class = "villa-badge" if hotel.hotel_type == 'villa' else "hotel-badge"
         badge_text = "පෞද්ගලික විලා" if hotel.hotel_type == 'villa' else "හොටෙල්"
         
+        # For villas, show "Full Villa Available"
         availability_text = "පූර්ණ විලා තිබේ" if hotel.hotel_type == 'villa' else f"{hotel.available_rooms} කාමර තිබේ"
         
         hotels_html += f"""
@@ -1134,117 +1004,406 @@ def view_hotels():
     """
     return base_template("Hotels", content)
 
-@app.route('/search_hotels')
-def search_hotels():
-    """හොටෙල් සෙවීම"""
-    location = request.args.get('location', '')
-    hotel_type = request.args.get('type', '')
-    min_price = request.args.get('min_price', 0, type=float)
-    max_price = request.args.get('max_price', 1000000, type=float)
+@app.route('/hotel/<int:hotel_id>')
+def hotel_detail(hotel_id):
+    """හොටෙල් විස්තර"""
+    hotel = Hotel.query.get_or_404(hotel_id)
+    rooms = Room.query.filter_by(hotel_id=hotel_id).all()
     
-    query = Hotel.query.filter_by(is_approved=True)
+    # Show user information if logged in
+    user_info = ""
+    if current_user.is_authenticated:
+        user_info = f"""
+        <div class="alert alert-info">
+            <h6><i class="fas fa-user"></i> පරිශීලක තොරතුරු</h6>
+            <p class="mb-1"><strong>නම:</strong> {current_user.full_name}</p>
+            <p class="mb-1"><strong>ඊමේල්:</strong> {current_user.email}</p>
+            <p class="mb-0"><strong>දුරකථන:</strong> {current_user.phone}</p>
+        </div>
+        """
     
-    if location:
-        query = query.filter(Hotel.location.ilike(f'%{location}%'))
-    if hotel_type:
-        query = query.filter_by(hotel_type=hotel_type)
-    if min_price:
-        query = query.filter(Hotel.price_per_night >= min_price)
-    if max_price:
-        query = query.filter(Hotel.price_per_night <= max_price)
-    
-    hotels = query.all()
-    
-    hotels_html = ""
-    for hotel in hotels:
-        badge_class = "villa-badge" if hotel.hotel_type == 'villa' else "hotel-badge"
-        badge_text = "පෞද්ගලික විලා" if hotel.hotel_type == 'villa' else "හොටෙල්"
+    rooms_html = ""
+    for room in rooms:
+        status_badge = "bg-success" if room.is_available else "bg-danger"
+        status_text = "තිබේ" if room.is_available else "නැත"
         
-        availability_text = "පූර්ණ විලා තිබේ" if hotel.hotel_type == 'villa' else f"{hotel.available_rooms} කාමර තිබේ"
-        
-        hotels_html += f"""
-        <div class="col-md-4 mb-4">
-            <div class="card hotel-card h-100">
-                <img src="{hotel.image_path or 'https://via.placeholder.com/300x200?text=Hotel+Image'}" 
-                     class="card-img-top hotel-image" alt="{hotel.name}">
+        rooms_html += f"""
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <img src="{room.image_path or 'https://via.placeholder.com/300x150?text=Room+Image'}" 
+                     class="card-img-top room-image" alt="Room {room.room_number}">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title">{hotel.name}</h5>
-                        <span class="badge {badge_class}">{badge_text}</span>
-                    </div>
-                    <p class="card-text">
-                        <i class="fas fa-map-marker-alt text-danger"></i> {hotel.location}<br>
-                        <i class="fas fa-money-bill-wave text-success"></i> රු. {hotel.price_per_night:,.2f} per night<br>
-                        <i class="fas fa-bed text-primary"></i> {availability_text}<br>
-                        <small class="text-muted">{hotel.description[:100]}...</small>
-                    </p>
-                </div>
-                <div class="card-footer">
-                    <a href="/hotel/{hotel.id}" class="btn btn-primary btn-sm">විස්තර බලන්න</a>
-                    {"<a href='/book_hotel/{}' class='btn btn-success btn-sm ms-1'>බුක් කරන්න</a>".format(hotel.id) if current_user.is_authenticated and current_user.user_type == 'customer' else ""}
+                    <h6>කාමරය {room.room_number} - {room.room_type}</h6>
+                    <p class="mb-1"><i class="fas fa-users"></i> පුද්ගලයන්: {room.capacity}</p>
+                    <p class="mb-1"><i class="fas fa-money-bill-wave"></i> මිල: රු. {room.price_per_night:,.2f} per night</p>
+                    <p class="mb-1"><i class="fas fa-star"></i> විශේෂාංග: {room.features or 'N/A'}</p>
+                    <span class="badge {status_badge}">{status_text}</span>
+                    {"<a href='/book_room/{}' class='btn btn-success btn-sm ms-2'>බුක් කරන්න</a>".format(room.id) if room.is_available and current_user.is_authenticated and current_user.user_type == 'customer' else ""}
                 </div>
             </div>
         </div>
         """
     
-    search_filters = []
-    if location:
-        search_filters.append(f"ස්ථානය: {location}")
-    if hotel_type:
-        type_text = "විලා" if hotel_type == 'villa' else "හොටෙල්"
-        search_filters.append(f"වර්ගය: {type_text}")
-    if min_price or max_price:
-        search_filters.append(f"මිල: රු. {min_price:,.0f} - රු. {max_price:,.0f}")
-    
-    filter_text = " | ".join(search_filters) if search_filters else "සියලුම හොටෙල්"
-    
     content = f"""
-    <h1><i class="fas fa-search"></i> හොටෙල් සෙවුම</h1>
-    
     <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">ස්ථානය</label>
-                    <input type="text" class="form-control" name="location" value="{location}" placeholder="ස්ථානය සොයන්න">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{hotel.image_path or 'https://via.placeholder.com/400x300?text=Hotel+Image'}" 
+                     class="img-fluid rounded-start" alt="{hotel.name}" style="height: 300px; width: 100%; object-fit: cover;">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h2 class="card-title">{hotel.name}</h2>
+                    <p class="card-text"><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {hotel.location}</p>
+                    <p class="card-text"><strong><i class="fas fa-info-circle"></i> Description:</strong> {hotel.description}</p>
+                    <p class="card-text"><strong><i class="fas fa-money-bill-wave"></i> Price per night:</strong> රු. {hotel.price_per_night:,.2f}</p>
+                    <p class="card-text"><strong><i class="fas fa-phone"></i> Contact:</strong> {hotel.contact_number}</p>
+                    <p class="card-text"><strong><i class="fas fa-star"></i> Amenities:</strong> {hotel.amenities}</p>
+                    <p class="card-text"><strong><i class="fas fa-building"></i> Type:</strong> 
+                        <span class="badge {'villa-badge' if hotel.hotel_type == 'villa' else 'hotel-badge'}">
+                            {'පෞද්ගලික විලා' if hotel.hotel_type == 'villa' else 'හොටෙල්'}
+                        </span>
+                    </p>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">හොටෙල් වර්ගය</label>
-                    <select class="form-control" name="type">
-                        <option value="">සියලුම</option>
-                        <option value="hotel" {"selected" if hotel_type == "hotel" else ""}>හොටෙල්</option>
-                        <option value="villa" {"selected" if hotel_type == "villa" else ""}>විලා</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">අවම මිල</label>
-                    <input type="number" class="form-control" name="min_price" value="{min_price}" placeholder="රු. 0">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">උපරිම මිල</label>
-                    <input type="number" class="form-control" name="max_price" value="{max_price}" placeholder="රු. 1000000">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">සොයන්න</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     
-    <p class="text-muted">සෙවුම් පෙරහන්: {filter_text}</p>
+    {user_info}
     
+    <h4>{'විලා විස්තර' if hotel.hotel_type == 'villa' else 'කාමර'}</h4>
     <div class="row">
-        {hotels_html if hotels else '<div class="col-12"><div class="alert alert-warning">සෙවුමට ගැලපෙන හොටෙල් හමු නොවීය</div></div>'}
+        {rooms_html if rooms else '<div class="col-12"><div class="alert alert-info">No rooms available for this hotel</div></div>'}
+    </div>
+    
+    <div class="mt-3">
+        <a href="/hotels" class="btn btn-primary">Back to Hotels</a>
+        {"<a href='/book_hotel/{}' class='btn btn-success ms-2'>Book This {}</a>".format(hotel.id, 'Villa' if hotel.hotel_type == 'villa' else 'Hotel') if current_user.is_authenticated and current_user.user_type == 'customer' else ""}
     </div>
     """
-    return base_template("Search Hotels", content)
+    return base_template(f"{hotel.name} - Details", content)
 
-# ... (rest of the routes remain the same as in the previous version)
+@app.route('/book_hotel/<int:hotel_id>', methods=['GET', 'POST'])
+@login_required
+def book_hotel(hotel_id):
+    """හොටෙල් බුක් කිරීම"""
+    if current_user.user_type != 'customer':
+        flash('මෙම පිටුවට ප්‍රවේශය ඔබට නැත.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    hotel = Hotel.query.get_or_404(hotel_id)
+    
+    # For villas, get the villa room
+    if hotel.hotel_type == 'villa':
+        available_rooms = Room.query.filter_by(hotel_id=hotel_id, is_available=True).all()
+    else:
+        available_rooms = Room.query.filter_by(hotel_id=hotel_id, is_available=True).all()
+    
+    if not available_rooms:
+        flash('මෙම {}-ට කාමර නොමැත.'.format('විලාවට' if hotel.hotel_type == 'villa' else 'හොටෙල්ට'), 'warning')
+        return redirect(url_for('hotel_detail', hotel_id=hotel_id))
+    
+    if request.method == 'POST':
+        room_id = request.form['room_id']
+        check_in = datetime.strptime(request.form['check_in'], '%Y-%m-%d').date()
+        check_out = datetime.strptime(request.form['check_out'], '%Y-%m-%d').date()
+        guest_name = request.form['guest_name']
+        guest_phone = request.form['guest_phone']
+        
+        room = Room.query.get(room_id)
+        if not room or not room.is_available:
+            flash('මෙම කාමරය තිබෙන්නේ නැත.', 'danger')
+            return redirect(url_for('book_hotel', hotel_id=hotel_id))
+        
+        # Calculate total price
+        nights = (check_out - check_in).days
+        if nights <= 0:
+            flash('කරුණාකර වලංගු check-in සහ check-out දින ඇතුළත් කරන්න.', 'danger')
+            return redirect(url_for('book_hotel', hotel_id=hotel_id))
+        
+        total_price = room.price_per_night * nights
+        
+        booking = Booking(
+            hotel_id=hotel_id,
+            room_id=room_id,
+            guest_name=guest_name,
+            guest_email=current_user.email,
+            guest_phone=guest_phone,
+            check_in_date=check_in,
+            check_out_date=check_out,
+            total_price=total_price,
+            customer_id=current_user.id,
+            status='confirmed'
+        )
+        
+        # Mark room as unavailable
+        room.is_available = False
+        hotel.available_rooms -= 1
+        
+        db.session.add(booking)
+        db.session.commit()
+        
+        # Send WhatsApp notification
+        send_whatsapp_notification(
+            hotel.contact_number,
+            guest_name,
+            check_in.strftime('%Y-%m-%d'),
+            check_out.strftime('%Y-%m-%d'),
+            hotel.name
+        )
+        
+        flash(f'බුකින්ග් සාර්ථකයි! මුළු මුදල: රු. {total_price:,.2f}', 'success')
+        return redirect(url_for('my_bookings'))
+    
+    rooms_options = ""
+    for room in available_rooms:
+        room_type = "විලා" if hotel.hotel_type == 'villa' else room.room_type
+        rooms_options += f'<option value="{room.id}">{room_type} - රු. {room.price_per_night:,.2f}/රාත්‍රිය (පුද්ගලයන්: {room.capacity})</option>'
+    
+    content = f"""
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-calendar-check"></i> බුකින්ග් - {hotel.name}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">අමුත්තන්ගේ නම</label>
+                                <input type="text" class="form-control" name="guest_name" value="{current_user.full_name}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">දුරකථන අංකය</label>
+                                <input type="text" class="form-control" name="guest_phone" value="{current_user.phone}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Check-in දිනය</label>
+                                <input type="date" class="form-control" name="check_in" min="{datetime.now().date()}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Check-out දිනය</label>
+                                <input type="date" class="form-control" name="check_out" min="{datetime.now().date()}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{'විලා' if hotel.hotel_type == 'villa' else 'කාමරය'} තෝරන්න</label>
+                            <select class="form-control" name="room_id" required>
+                                <option value="">{'විලා' if hotel.hotel_type == 'villa' else 'කාමරය'} තෝරන්න...</option>
+                                {rooms_options}
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> පරිශීලක තොරතුරු</h6>
+                            <p class="mb-1"><strong>නම:</strong> {current_user.full_name}</p>
+                            <p class="mb-1"><strong>ඊමේල්:</strong> {current_user.email}</p>
+                            <p class="mb-0"><strong>දුරකථන:</strong> {current_user.phone}</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">බුකින්ග් තහවුරු කරන්න</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    return base_template("Book Hotel", content)
+
+@app.route('/my_bookings')
+@login_required
+def my_bookings():
+    """මගේ බුකින්ග්"""
+    if current_user.user_type != 'customer':
+        flash('මෙම පිටුවට ප්‍රවේශය ඔබට නැත.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    bookings = Booking.query.filter_by(customer_id=current_user.id).order_by(Booking.booking_date.desc()).all()
+    
+    bookings_html = ""
+    for booking in bookings:
+        hotel = Hotel.query.get(booking.hotel_id)
+        room = Room.query.get(booking.room_id)
+        status_badge = "bg-success" if booking.status == 'confirmed' else "bg-warning"
+        
+        bookings_html += f"""
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>{hotel.name if hotel else 'N/A'}</h5>
+                    <p class="mb-1"><strong>කාමරය:</strong> {room.room_number if room else 'N/A'}</p>
+                    <p class="mb-1"><strong>අමුත්තා:</strong> {booking.guest_name}</p>
+                    <p class="mb-1"><strong>Check-in:</strong> {booking.check_in_date}</p>
+                    <p class="mb-1"><strong>Check-out:</strong> {booking.check_out_date}</p>
+                    <p class="mb-1"><strong>මුළු මුදල:</strong> රු. {booking.total_price:,.2f}</p>
+                    <p class="mb-1"><strong>බුකින්ග් දිනය:</strong> {booking.booking_date.strftime('%Y-%m-%d %H:%M')}</p>
+                    <span class="badge {status_badge}">{booking.status}</span>
+                </div>
+            </div>
+        </div>
+        """
+    
+    content = f"""
+    <div class="alert alert-info">
+        <h1><i class="fas fa-history"></i> මගේ බුකින්ග්</h1>
+        <p>ඔබගේ සියලුම බුකින්ග් මෙහි ඇත</p>
+    </div>
+    
+    <div class="row">
+        {bookings_html if bookings_html else '<div class="col-12"><div class="alert alert-warning">You have no bookings yet</div></div>'}
+    </div>
+    """
+    return base_template("My Bookings", content)
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    """පරිශීලකයන් පාලනය"""
+    if current_user.user_type != 'super_admin':
+        flash('මෙම පිටුවට ප්‍රවේශය ඔබට නැත.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    users = User.query.all()
+    
+    users_html = ""
+    for user in users:
+        status_badge = "bg-success" if user.is_active else "bg-danger"
+        status_text = "සක්‍රීය" if user.is_active else "අක්‍රීය"
+        type_badge = "bg-primary" if user.user_type == 'super_admin' else "bg-info" if user.user_type == 'hotel_admin' else "bg-secondary"
+        
+        users_html += f"""
+        <tr>
+            <td>{user.id}</td>
+            <td>{user.username}</td>
+            <td>{user.full_name}</td>
+            <td>{user.email}</td>
+            <td>{user.phone}</td>
+            <td><span class="badge {type_badge}">{user.user_type}</span></td>
+            <td>{user.created_at.strftime('%Y-%m-%d')}</td>
+            <td><span class="badge {status_badge}">{status_text}</span></td>
+        </tr>
+        """
+    
+    content = f"""
+    <div class="alert alert-primary">
+        <h1><i class="fas fa-users"></i> පරිශීලක කළමනාකරණය</h1>
+        <p>සියලුම ලියාපදිංචි පරිශීලකයන්</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>පරිශීලක නාමය</th>
+                            <th>සම්පූර්ණ නම</th>
+                            <th>ඊමේල්</th>
+                            <th>දුරකථන</th>
+                            <th>වර්ගය</th>
+                            <th>ලියාපදිංචි දිනය</th>
+                            <th>තත්වය</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users_html if users_html else '<tr><td colspan="8" class="text-center">No users found</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    """
+    return base_template("Manage Users", content)
+
+# Add other essential routes...
+
+@app.route('/admin/hotels')
+@login_required
+def admin_hotels():
+    """පරිපාලක හොටෙල් පිටුව"""
+    if current_user.user_type != 'super_admin':
+        flash('මෙම පිටුවට ප්‍රවේශය ඔබට නැත.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    hotels = Hotel.query.all()
+    
+    hotels_html = ""
+    for hotel in hotels:
+        status_badge = "bg-success" if hotel.is_approved else "bg-warning"
+        status_text = "අනුමතයි" if hotel.is_approved else "අනුමත කිරීමට"
+        type_badge = "villa-badge" if hotel.hotel_type == 'villa' else "hotel-badge"
+        type_text = "විලා" if hotel.hotel_type == 'villa' else "හොටෙල්"
+        
+        hotels_html += f"""
+        <tr>
+            <td>{hotel.name}</td>
+            <td>{hotel.location}</td>
+            <td><span class="badge {type_badge}">{type_text}</span></td>
+            <td>{hotel.owner_name}</td>
+            <td>{hotel.contact_number}</td>
+            <td>රු. {hotel.price_per_night:,.2f}</td>
+            <td><span class="badge {status_badge}">{status_text}</span></td>
+            <td>
+                {"<a href='/admin/approve_hotel/{}' class='btn btn-success btn-sm'>Approve</a>".format(hotel.id) if not hotel.is_approved else ""}
+                <a href="/hotel/{hotel.id}" class="btn btn-info btn-sm">View</a>
+            </td>
+        </tr>
+        """
+    
+    content = f"""
+    <div class="alert alert-primary">
+        <h1><i class="fas fa-hotel"></i> හොටෙල් පාලනය</h1>
+        <p>සියලුම හොටෙල් නිරීක්ෂණය කර අනුමත කිරීම</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>හොටෙල් නම</th>
+                            <th>ස්ථානය</th>
+                            <th>වර්ගය</th>
+                            <th>අයිතිකරු</th>
+                            <th>දුරකථනය</th>
+                            <th>මිල</th>
+                            <th>තත්වය</th>
+                            <th>ක්‍රියා</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {hotels_html if hotels_html else '<tr><td colspan="8" class="text-center">No hotels found</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    """
+    return base_template("Manage Hotels", content)
+
+@app.route('/admin/approve_hotel/<int:hotel_id>')
+@login_required
+def approve_hotel(hotel_id):
+    """හොටෙල් අනුමත කිරීම"""
+    if current_user.user_type != 'super_admin':
+        flash('මෙම පිටුවට ප්‍රවේශය ඔබට නැත.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    hotel = Hotel.query.get_or_404(hotel_id)
+    hotel.is_approved = True
+    hotel.approved_by = current_user.id
+    hotel.approved_at = datetime.utcnow()
+    
+    db.session.commit()
+    flash(f'{hotel.name} හොටෙල් සාර්ථකව අනුමත කරන ලදී!', 'success')
+    return redirect(url_for('admin_hotels'))
 
 # Main execution
 if __name__ == '__main__':
-    print("🔄 Initializing database with new schema...")
+    print("🔄 Initializing database...")
     init_db()
     print("🚀 Hotel Booking System Started!")
     print("📍 Access your application at:")
@@ -1255,28 +1414,11 @@ if __name__ == '__main__':
     print("   Super Admin - Username: superadmin, Password: admin123")
     print("   Customer - Username: customer, Password: customer123") 
     print("   Hotel Admin - Username: hotelowner, Password: owner123")
-    print("   Your Account - Username: kris, Password: kris123")
     print("")
-    print("📊 Complete Features:")
-    print("   ✅ Full hotel_type support (hotel/villa)")
+    print("📊 Features:")
+    print("   ✅ Data persistence - No more data loss")
+    print("   ✅ Villa support with full villa booking")
+    print("   ✅ User information display")
+    print("   ✅ Image upload support")
     print("   ✅ User management")
-    print("   ✅ Booking system")
-    print("   ✅ Calendar view")
-    print("   ✅ Room management")
-    print("   ✅ Villa support")
-    print("   ✅ Image upload ready")
-    print("   ✅ WhatsApp notifications")
-    print("   ✅ Fixed revenue calculation")
-    print("   ✅ Search and filtering")
-    print("   ✅ Booking cancellation")
-    print("   ✅ Password strength validation")
-    print("   ✅ Error handling")
-    print("   ✅ Environment configuration")
-    
-    # Use production-ready server in production
-    if os.environ.get('FLASK_ENV') == 'production':
-        from waitress import serve
-        print("🚀 Starting production server...")
-        serve(app, host='0.0.0.0', port=5000)
-    else:
-        app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
