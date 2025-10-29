@@ -15,7 +15,20 @@ load_dotenv()
 # Flask app creation
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-12345-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///hotel_booking.db'
+
+# Database configuration for Railway (PostgreSQL)
+def get_database_url():
+    if 'DATABASE_URL' in os.environ:
+        # Railway provides PostgreSQL URL - convert to proper format
+        database_url = os.environ['DATABASE_URL']
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        return database_url
+    else:
+        # Local development - use SQLite
+        return 'sqlite:///hotel_booking.db'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # File upload configuration
@@ -167,164 +180,168 @@ def send_whatsapp_api_message(phone, message):
 # Database initialization
 def init_db():
     with app.app_context():
-        # Drop all tables and recreate with new schema
-        db.drop_all()
+        # Create all tables
         db.create_all()
         
-        print("✅ Database tables created with new schema!")
+        print("✅ Database tables created!")
         
-        # Create super admin
-        super_admin = User(
-            username='superadmin',
-            email='super@admin.com',
-            user_type='super_admin',
-            full_name='System Super Administrator',
-            phone='0112345678',
-            is_active=True
-        )
-        super_admin.set_password('admin123')
-        db.session.add(super_admin)
-        
-        # Create sample customer user
-        customer_user = User(
-            username='customer',
-            email='customer@example.com',
-            user_type='customer',
-            full_name='Sample Customer',
-            phone='0771234567',
-            is_active=True
-        )
-        customer_user.set_password('customer123')
-        db.session.add(customer_user)
-        
-        # Create sample hotel admin
-        hotel_admin = User(
-            username='hotelowner',
-            email='owner@example.com',
-            user_type='hotel_admin',
-            full_name='Hotel Owner',
-            phone='0777654321',
-            is_active=True
-        )
-        hotel_admin.set_password('owner123')
-        db.session.add(hotel_admin)
-        
-        # Create your user account
-        your_account = User(
-            username='kris',
-            email='kris@gmail.com',
-            user_type='hotel_admin',
-            full_name='Kris Perera',
-            phone='0771234567',
-            is_active=True
-        )
-        your_account.set_password('kris123')
-        db.session.add(your_account)
-        
-        # Create sample hotels with hotel_type
-        hotels = [
-            Hotel(
-                name='සීගිරිය පැලස්',
-                location='සීගිරිය',
-                description='සීගිරිය බලකොටුව අසල පිහිටා ඇති විලාසිතා සම්පන්න හොටෙලය',
-                owner_name='සුනිල් පෙරේරා',
-                owner_email='sunil@sigiriyapalace.com',
-                contact_number='0771234567',
-                price_per_night=25000.00,
-                total_rooms=50,
-                available_rooms=35,
-                amenities='පිහිනුම් තටාකය, විනෝදාස්වාද, නවීන කාමර',
-                hotel_type='hotel',
-                is_approved=True
-            ),
-            Hotel(
-                name='ගාලු විලා',
-                location='ගාල්ල',
-                description='ගාලු කොටුව අසල පිහිටා ඇති පෞද්ගලික විලාව',
-                owner_name='ප්‍රියන්ත සිල්වා',
-                owner_email='priyantha@gallevilla.com',
-                contact_number='0775558888',
-                price_per_night=45000.00,
-                total_rooms=1,
-                available_rooms=1,
-                amenities='පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා',
-                hotel_type='villa',
-                is_approved=True
-            ),
-            Hotel(
-                name='කොළඹ රැජින',
-                location='කොළඹ',
-                description='කොළඹ මධ්‍යස්ථානයේ පිහිටා ඇති නවීන හොටෙලය',
-                owner_name='මහේෂ් ගුණරත්න',
-                owner_email='mahesh@colombiqueen.com',
-                contact_number='0777654321',
-                price_per_night=18000.00,
-                total_rooms=30,
-                available_rooms=25,
-                amenities='WiFi, A/C, අවන්හල, රියැදුරන් සේවාව',
-                hotel_type='hotel',
-                is_approved=True
-            ),
-            Hotel(
-                name='ක්‍රිස් හොටෙල්',
-                location='කොළඹ',
-                description='නවීන සුවපහසු සහිත හොටෙලය',
-                owner_name='ක්‍රිස් පෙරේරා',
-                owner_email='kris@gmail.com',
-                contact_number='0771234567',
-                price_per_night=20000.00,
-                total_rooms=20,
-                available_rooms=15,
-                amenities='WiFi, A/C, අවන්හල, පාකිං',
-                hotel_type='hotel',
-                is_approved=True
+        # Check if super admin already exists
+        super_admin = User.query.filter_by(username='superadmin').first()
+        if not super_admin:
+            # Create super admin
+            super_admin = User(
+                username='superadmin',
+                email='super@admin.com',
+                user_type='super_admin',
+                full_name='System Super Administrator',
+                phone='0112345678',
+                is_active=True
             )
-        ]
-        
-        for hotel in hotels:
-            db.session.add(hotel)
-        
-        db.session.commit()
-        print("✅ Sample hotels created successfully!")
-        
-        # Create rooms for hotels
-        hotels_in_db = Hotel.query.all()
-        for hotel in hotels_in_db:
-            if hotel.hotel_type == 'villa':
-                # For villa, create one main villa unit
-                villa_room = Room(
-                    hotel_id=hotel.id,
-                    room_number='VILLA-001',
-                    room_type='පෞද්ගලික විලා',
-                    capacity=8,
-                    price_per_night=hotel.price_per_night,
-                    is_available=True,
-                    features='4 කාමර, 3 සනීපාරක්ෂක, පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා'
+            super_admin.set_password('admin123')
+            db.session.add(super_admin)
+            
+            # Create sample customer user
+            customer_user = User(
+                username='customer',
+                email='customer@example.com',
+                user_type='customer',
+                full_name='Sample Customer',
+                phone='0771234567',
+                is_active=True
+            )
+            customer_user.set_password('customer123')
+            db.session.add(customer_user)
+            
+            # Create sample hotel admin
+            hotel_admin = User(
+                username='hotelowner',
+                email='owner@example.com',
+                user_type='hotel_admin',
+                full_name='Hotel Owner',
+                phone='0777654321',
+                is_active=True
+            )
+            hotel_admin.set_password('owner123')
+            db.session.add(hotel_admin)
+            
+            # Create your user account
+            your_account = User(
+                username='kris',
+                email='kris@gmail.com',
+                user_type='hotel_admin',
+                full_name='Kris Perera',
+                phone='0771234567',
+                is_active=True
+            )
+            your_account.set_password('kris123')
+            db.session.add(your_account)
+            
+            # Create sample hotels with hotel_type
+            hotels = [
+                Hotel(
+                    name='සීගිරිය පැලස්',
+                    location='සීගිරිය',
+                    description='සීගිරිය බලකොටුව අසල පිහිටා ඇති විලාසිතා සම්පන්න හොටෙලය',
+                    owner_name='සුනිල් පෙරේරා',
+                    owner_email='sunil@sigiriyapalace.com',
+                    contact_number='0771234567',
+                    price_per_night=25000.00,
+                    total_rooms=50,
+                    available_rooms=35,
+                    amenities='පිහිනුම් තටාකය, විනෝදාස්වාද, නවීන කාමර',
+                    hotel_type='hotel',
+                    is_approved=True
+                ),
+                Hotel(
+                    name='ගාලු විලා',
+                    location='ගාල්ල',
+                    description='ගාලු කොටුව අසල පිහිටා ඇති පෞද්ගලික විලාව',
+                    owner_name='ප්‍රියන්ත සිල්වා',
+                    owner_email='priyantha@gallevilla.com',
+                    contact_number='0775558888',
+                    price_per_night=45000.00,
+                    total_rooms=1,
+                    available_rooms=1,
+                    amenities='පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා',
+                    hotel_type='villa',
+                    is_approved=True
+                ),
+                Hotel(
+                    name='කොළඹ රැජින',
+                    location='කොළඹ',
+                    description='කොළඹ මධ්‍යස්ථානයේ පිහිටා ඇති නවීන හොටෙලය',
+                    owner_name='මහේෂ් ගුණරත්න',
+                    owner_email='mahesh@colombiqueen.com',
+                    contact_number='0777654321',
+                    price_per_night=18000.00,
+                    total_rooms=30,
+                    available_rooms=25,
+                    amenities='WiFi, A/C, අවන්හල, රියැදුරන් සේවාව',
+                    hotel_type='hotel',
+                    is_approved=True
+                ),
+                Hotel(
+                    name='ක්‍රිස් හොටෙල්',
+                    location='කොළඹ',
+                    description='නවීන සුවපහසු සහිත හොටෙලය',
+                    owner_name='ක්‍රිස් පෙරේරා',
+                    owner_email='kris@gmail.com',
+                    contact_number='0771234567',
+                    price_per_night=20000.00,
+                    total_rooms=20,
+                    available_rooms=15,
+                    amenities='WiFi, A/C, අවන්හල, පාකිං',
+                    hotel_type='hotel',
+                    is_approved=True
                 )
-                db.session.add(villa_room)
-            else:
-                # For regular hotels, create multiple rooms
-                room_types = [
-                    {'number': '101', 'type': 'Standard', 'capacity': 2, 'price': hotel.price_per_night * 0.8, 'features': 'AC, TV, WiFi'},
-                    {'number': '102', 'type': 'Deluxe', 'capacity': 3, 'price': hotel.price_per_night, 'features': 'AC, TV, WiFi, Mini Bar'},
-                    {'number': '201', 'type': 'Suite', 'capacity': 4, 'price': hotel.price_per_night * 1.5, 'features': 'AC, TV, WiFi, Mini Bar, Balcony'}
-                ]
-                
-                for room_data in room_types:
-                    room = Room(
+            ]
+            
+            for hotel in hotels:
+                db.session.add(hotel)
+            
+            db.session.commit()
+            print("✅ Sample hotels created successfully!")
+            
+            # Create rooms for hotels
+            hotels_in_db = Hotel.query.all()
+            for hotel in hotels_in_db:
+                if hotel.hotel_type == 'villa':
+                    # For villa, create one main villa unit
+                    villa_room = Room(
                         hotel_id=hotel.id,
-                        room_number=room_data['number'],
-                        room_type=room_data['type'],
-                        capacity=room_data['capacity'],
-                        price_per_night=room_data['price'],
+                        room_number='VILLA-001',
+                        room_type='පෞද්ගලික විලා',
+                        capacity=8,
+                        price_per_night=hotel.price_per_night,
                         is_available=True,
-                        features=room_data['features']
+                        features='4 කාමර, 3 සනීපාරක්ෂක, පෞද්ගලික පිහිනුම් තටාකය, උද්‍යානය, නිවාඩුපුරා සේවා'
                     )
-                    db.session.add(room)
-        
-        db.session.commit()
-        print("✅ Rooms created successfully!")
-        print("✅ Database initialized successfully!")
+                    db.session.add(villa_room)
+                else:
+                    # For regular hotels, create multiple rooms
+                    room_types = [
+                        {'number': '101', 'type': 'Standard', 'capacity': 2, 'price': hotel.price_per_night * 0.8, 'features': 'AC, TV, WiFi'},
+                        {'number': '102', 'type': 'Deluxe', 'capacity': 3, 'price': hotel.price_per_night, 'features': 'AC, TV, WiFi, Mini Bar'},
+                        {'number': '201', 'type': 'Suite', 'capacity': 4, 'price': hotel.price_per_night * 1.5, 'features': 'AC, TV, WiFi, Mini Bar, Balcony'}
+                    ]
+                    
+                    for room_data in room_types:
+                        room = Room(
+                            hotel_id=hotel.id,
+                            room_number=room_data['number'],
+                            room_type=room_data['type'],
+                            capacity=room_data['capacity'],
+                            price_per_night=room_data['price'],
+                            is_available=True,
+                            features=room_data['features']
+                        )
+                        db.session.add(room)
+            
+            db.session.commit()
+            print("✅ Rooms created successfully!")
+            print("✅ Database initialized successfully!")
+        else:
+            print("✅ Database already initialized!")
 
 # Base Template with common styling
 def base_template(title, content):
@@ -1134,149 +1151,34 @@ def view_hotels():
     """
     return base_template("Hotels", content)
 
-@app.route('/search_hotels')
-def search_hotels():
-    """හොටෙල් සෙවීම"""
-    location = request.args.get('location', '')
-    hotel_type = request.args.get('type', '')
-    min_price = request.args.get('min_price', 0, type=float)
-    max_price = request.args.get('max_price', 1000000, type=float)
-    
-    query = Hotel.query.filter_by(is_approved=True)
-    
-    if location:
-        query = query.filter(Hotel.location.ilike(f'%{location}%'))
-    if hotel_type:
-        query = query.filter_by(hotel_type=hotel_type)
-    if min_price:
-        query = query.filter(Hotel.price_per_night >= min_price)
-    if max_price:
-        query = query.filter(Hotel.price_per_night <= max_price)
-    
-    hotels = query.all()
-    
-    hotels_html = ""
-    for hotel in hotels:
-        badge_class = "villa-badge" if hotel.hotel_type == 'villa' else "hotel-badge"
-        badge_text = "පෞද්ගලික විලා" if hotel.hotel_type == 'villa' else "හොටෙල්"
-        
-        availability_text = "පූර්ණ විලා තිබේ" if hotel.hotel_type == 'villa' else f"{hotel.available_rooms} කාමර තිබේ"
-        
-        hotels_html += f"""
-        <div class="col-md-4 mb-4">
-            <div class="card hotel-card h-100">
-                <img src="{hotel.image_path or 'https://via.placeholder.com/300x200?text=Hotel+Image'}" 
-                     class="card-img-top hotel-image" alt="{hotel.name}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title">{hotel.name}</h5>
-                        <span class="badge {badge_class}">{badge_text}</span>
-                    </div>
-                    <p class="card-text">
-                        <i class="fas fa-map-marker-alt text-danger"></i> {hotel.location}<br>
-                        <i class="fas fa-money-bill-wave text-success"></i> රු. {hotel.price_per_night:,.2f} per night<br>
-                        <i class="fas fa-bed text-primary"></i> {availability_text}<br>
-                        <small class="text-muted">{hotel.description[:100]}...</small>
-                    </p>
-                </div>
-                <div class="card-footer">
-                    <a href="/hotel/{hotel.id}" class="btn btn-primary btn-sm">විස්තර බලන්න</a>
-                    {"<a href='/book_hotel/{}' class='btn btn-success btn-sm ms-1'>බුක් කරන්න</a>".format(hotel.id) if current_user.is_authenticated and current_user.user_type == 'customer' else ""}
-                </div>
-            </div>
-        </div>
-        """
-    
-    search_filters = []
-    if location:
-        search_filters.append(f"ස්ථානය: {location}")
-    if hotel_type:
-        type_text = "විලා" if hotel_type == 'villa' else "හොටෙල්"
-        search_filters.append(f"වර්ගය: {type_text}")
-    if min_price or max_price:
-        search_filters.append(f"මිල: රු. {min_price:,.0f} - රු. {max_price:,.0f}")
-    
-    filter_text = " | ".join(search_filters) if search_filters else "සියලුම හොටෙල්"
-    
-    content = f"""
-    <h1><i class="fas fa-search"></i> හොටෙල් සෙවුම</h1>
-    
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">ස්ථානය</label>
-                    <input type="text" class="form-control" name="location" value="{location}" placeholder="ස්ථානය සොයන්න">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">හොටෙල් වර්ගය</label>
-                    <select class="form-control" name="type">
-                        <option value="">සියලුම</option>
-                        <option value="hotel" {"selected" if hotel_type == "hotel" else ""}>හොටෙල්</option>
-                        <option value="villa" {"selected" if hotel_type == "villa" else ""}>විලා</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">අවම මිල</label>
-                    <input type="number" class="form-control" name="min_price" value="{min_price}" placeholder="රු. 0">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">උපරිම මිල</label>
-                    <input type="number" class="form-control" name="max_price" value="{max_price}" placeholder="රු. 1000000">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">සොයන්න</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <p class="text-muted">සෙවුම් පෙරහන්: {filter_text}</p>
-    
-    <div class="row">
-        {hotels_html if hotels else '<div class="col-12"><div class="alert alert-warning">සෙවුමට ගැලපෙන හොටෙල් හමු නොවීය</div></div>'}
-    </div>
-    """
-    return base_template("Search Hotels", content)
-
-# ... (rest of the routes remain the same as in the previous version)
+# ... (rest of your routes remain the same)
 
 # Main execution
 if __name__ == '__main__':
-    print("🔄 Initializing database with new schema...")
-    init_db()
-    print("🚀 Hotel Booking System Started!")
-    print("📍 Access your application at:")
-    print("   → http://127.0.0.1:5000")
-    print("   → http://localhost:5000")
-    print("")
-    print("🔑 Login Credentials:")
-    print("   Super Admin - Username: superadmin, Password: admin123")
-    print("   Customer - Username: customer, Password: customer123") 
-    print("   Hotel Admin - Username: hotelowner, Password: owner123")
-    print("   Your Account - Username: kris, Password: kris123")
-    print("")
-    print("📊 Complete Features:")
-    print("   ✅ Full hotel_type support (hotel/villa)")
-    print("   ✅ User management")
-    print("   ✅ Booking system")
-    print("   ✅ Calendar view")
-    print("   ✅ Room management")
-    print("   ✅ Villa support")
-    print("   ✅ Image upload ready")
-    print("   ✅ WhatsApp notifications")
-    print("   ✅ Fixed revenue calculation")
-    print("   ✅ Search and filtering")
-    print("   ✅ Booking cancellation")
-    print("   ✅ Password strength validation")
-    print("   ✅ Error handling")
-    print("   ✅ Environment configuration")
-    
-    # Use production-ready server in production
-    if os.environ.get('FLASK_ENV') == 'production':
-        from waitress import serve
-        print("🚀 Starting production server...")
-        serve(app, host='0.0.0.0', port=5000)
+    # Check if running on Railway
+    if 'DATABASE_URL' in os.environ:
+        print("🚀 Running on Railway with PostgreSQL...")
+        print(f"📊 Database URL: {get_database_url()}")
+        
+        with app.app_context():
+            try:
+                # Create tables if they don't exist
+                db.create_all()
+                print("✅ Database tables verified!")
+                
+                # Initialize sample data
+                init_db()
+                
+            except Exception as e:
+                print(f"❌ Database error: {e}")
+        
+        port = int(os.environ.get('PORT', 5000))
+        app.run(host='0.0.0.0', port=port, debug=False)
     else:
+        print("🔄 Initializing database with new schema...")
+        init_db()
+        print("🚀 Hotel Booking System Started!")
+        print("📍 Access your application at:")
+        print("   → http://127.0.0.1:5000")
+        print("   → http://localhost:5000")
         app.run(debug=True, host='0.0.0.0', port=5000)

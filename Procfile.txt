@@ -1,1 +1,2 @@
 web: gunicorn app:app
+release: python railway_init.py
